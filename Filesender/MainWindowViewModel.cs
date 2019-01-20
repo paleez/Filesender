@@ -111,12 +111,22 @@ namespace Filesender
             var res = ofd.ShowDialog();
             if ((bool)res)
             {
-                Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                client.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                byte[] bytes = new byte[256];
+                int byteCount = 0;
+                //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                //client.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 Console.WriteLine("this is filename " + ofd.FileName);
-                client.SendFile(ofd.FileName);
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
+                //client.SendFile(ofd.FileName);
+                //client.SendFile(ofd.FileName, bytes, bytes, TransmitFileOptions.UseDefaultWorkerThread);
+                //listenSocket.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                listenSocket.SendFile(ofd.FileName);
+                byteCount = listenSocket.Receive(bytes, 0, listenSocket.Available, SocketFlags.None);
+                if (byteCount > 0)
+                {
+                    Console.WriteLine("mhm");
+                }
+                listenSocket.Shutdown(SocketShutdown.Both);
+                listenSocket.Close();
                 //listenSocket.SendFile(ofd.FileName);
                 //listenSocket.Shutdown(SocketShutdown.Both);
                 //listenSocket.Close();
