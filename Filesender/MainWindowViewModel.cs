@@ -74,8 +74,8 @@ namespace Filesender
         private void ConnectThread()
         {
             TcpClient tc = new TcpClient();
-            Console.WriteLine(IPAddress.Parse(theirIp));
-            tc.Connect(IPAddress.Parse(theirIp), 21);
+            Console.WriteLine(IPAddress.Parse(TheirIp));
+            tc.Connect(IPAddress.Parse(TheirIp), TheirPort);
         }
         private void StartMyServer()
         {
