@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
+﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,8 +32,9 @@ namespace Filesender
 
         public string IsConnected { get { return isConnected; } set { isConnected = value; OnPropertyChanged(nameof(IsConnected)); } }
         private string isConnected;
-        Thread listeningThread, connectingThread;
+        Thread listeningThread, connectingThread, sendThread;
         TcpListener tcp;
+        Socket listenSocket;
         //string filePath, string hostName, int port
 
         public MainWindowViewModel()
@@ -43,6 +45,7 @@ namespace Filesender
             StartMyServerCommand = new Command(StartMyServer);
             listeningThread = new Thread(Listen);
             connectingThread = new Thread(ConnectThread);
+            sendThread = new Thread(SendThread);
         }
 
         private void ChooseFolder()
@@ -91,10 +94,30 @@ namespace Filesender
         private void Listen()
         {
             Socket s = tcp.AcceptSocket();
+            //listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            listenSocket = s;
         }
         private void SendFile()
         {
+            sendThread.Start();
+        }
+        private void SendThread()
+        {
+            OpenFileDialog ofd = new OpenFileDialog
+            {
+                Filter = "*.*"
+            };
 
+            var res = ofd.ShowDialog();
+            if ((bool)res)
+            {
+                //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                listenSocket.SendFile(ofd.FileName);
+                Console.WriteLine("what");
+            }
+            listenSocket.Shutdown(SocketShutdown.Both);
+            listenSocket.Close();
+            
         }
         public void SendTCP(string M, string IPA, Int32 PortN)
         {
