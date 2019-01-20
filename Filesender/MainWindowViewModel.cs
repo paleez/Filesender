@@ -21,8 +21,8 @@ namespace Filesender
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
-        private int myPort = 6096;
+        //public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
+        //private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "212.116.64.211";
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
@@ -59,7 +59,7 @@ namespace Filesender
             //connectingThread = new Thread(ConnectThread);
             sendThread = new Thread(SendFileThread);
 
-            server = new Server();
+            //server = new Server();
         }
 
         private void ChooseFolder()
@@ -107,11 +107,11 @@ namespace Filesender
             //listenSocket = tcp.AcceptSocket();
             IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ip = ipEntry.AddressList[1];
-            TcpListener tc = new TcpListener(ip, myPort);
-            tcpListener = tc;
-            tcpListener.Start();
+            //TcpListener tc = new TcpListener(ip, myPort);
+            //tcpListener = tc;
+            //tcpListener.Start();
             Console.WriteLine("this is ip " + ip);
-            Console.WriteLine("this is port " + myPort);
+            //Console.WriteLine("this is port " + myPort);
             //listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             
         }
@@ -134,11 +134,7 @@ namespace Filesender
                 tcpClient = tc;
                 Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
                 tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                //IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
-                //IPAddress ip = ipEntry.AddressList[1];
-                //TcpListener tc = new TcpListener(ip, myPort);
-                //tcpListener = tc;
-                //tcpListener.Start();
+
                 tcpClient.Close();
                 //server is started, so tcpClient should be available
 
@@ -148,10 +144,7 @@ namespace Filesender
                 fileToSendPath = ofd.FileName;
                 int bufferSize = 1024;
                 byte[] data = File.ReadAllBytes(fileToSendPath);
-                //TcpClient connection = new TcpClient();
-                //connection.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                //listenSocket = tcpListener.AcceptSocket();
-                FileStream fs;
+
                 TcpClient t = new TcpClient();
                 tcpClient = t;
                 tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
