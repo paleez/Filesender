@@ -93,9 +93,9 @@ namespace Filesender
         }
         private void Listen()
         {
-            Socket s = tcp.AcceptSocket();
-            //listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            listenSocket = s;
+            //listenSocket = tcp.AcceptSocket();
+            listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            
         }
         private void SendFile()
         {
@@ -105,14 +105,16 @@ namespace Filesender
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
-                Filter = "*.*"
+                Filter = "All Files (*.*)|*.*"
             };
 
             var res = ofd.ShowDialog();
             if ((bool)res)
             {
                 //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                Console.WriteLine("this is filename " + ofd.FileName);
                 listenSocket.SendFile(ofd.FileName);
+                
                 Console.WriteLine("what");
             }
             listenSocket.Shutdown(SocketShutdown.Both);
