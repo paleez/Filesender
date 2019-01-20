@@ -32,8 +32,9 @@ namespace Filesender
 
         public string IsConnected { get { return isConnected; } set { isConnected = value; OnPropertyChanged(nameof(IsConnected)); } }
         private string isConnected;
-        Thread listeningThread, connectingThread, sendThread;
-        TcpListener tcp;
+        //Thread listeningThread, connectingThread, sendThread, receiveThread;
+        TcpListener tcpListener, tcpListener2;
+        TcpClient tcpClient;
         Socket listenSocket;
         //string filePath, string hostName, int port
 
@@ -42,10 +43,11 @@ namespace Filesender
             ChooseFolderCommand = new Command(ChooseFolder);
             ConnectCommand = new Command(Connect);
             SendFileCommand = new Command(SendFile);
-            StartMyServerCommand = new Command(StartMyServer);
-            listeningThread = new Thread(Listen);
-            connectingThread = new Thread(ConnectThread);
-            sendThread = new Thread(SendThread);
+            StartMyServerCommand = new Command(StartServer);
+            //listeningThread = new Thread(StartServerThread);
+            //connectingThread = new Thread(ConnectThread);
+            //sendThread = new Thread(SendFileThread);
+            //receiveThread = new Thread(ReceiveFileThread);
         }
 
         private void ChooseFolder()
@@ -72,36 +74,40 @@ namespace Filesender
 
         private void Connect()
         {
-            connectingThread.Start();
+            //connectingThread.Start();
+            ConnectThread();
         }
         private void ConnectThread()
         {
             TcpClient tc = new TcpClient();
+            tcpClient = tc;
             Console.WriteLine(IPAddress.Parse(TheirIp));
-            tc.Connect(IPAddress.Parse(TheirIp), TheirPort);
+            tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
         }
-        private void StartMyServer()
+        private void StartServer()
         {
+            //listeningThread.Start();
+            StartServerThread();
+        }
+        private void StartServerThread()
+        {
+            //listenSocket = tcp.AcceptSocket();
             IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ip = ipEntry.AddressList[1];
-            TcpListener tcpListener = new TcpListener(ip, myPort);
-            tcp = tcpListener;
+            TcpListener tc = new TcpListener(ip, myPort);
+            tcpListener = tc;
             tcpListener.Start();
             Console.WriteLine("this is ip " + ip);
             Console.WriteLine("this is port " + myPort);
-            listeningThread.Start();
-        }
-        private void Listen()
-        {
-            //listenSocket = tcp.AcceptSocket();
             listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             
         }
         private void SendFile()
         {
-            sendThread.Start();
+            //sendThread.Start();
+            SendFileThread();
         }
-        private void SendThread()
+        private void SendFileThread()
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
@@ -111,28 +117,95 @@ namespace Filesender
             var res = ofd.ShowDialog();
             if ((bool)res)
             {
-                byte[] bytes = new byte[256];
-                int byteCount = 0;
+                IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+                IPAddress ip = ipEntry.AddressList[1];
+                TcpListener tc = new TcpListener(ip, myPort);
+                tcpListener = tc;
+                tcpListener.Start();
+
+                ConnectThread();
+               
+                Console.WriteLine("this is ip " + TheirIp);
+                Console.WriteLine("this is port " + TheirPort);
+
+                listenSocket = tcpListener.AcceptSocket();
+                fileToSendPath = ofd.FileName;
+                int bufferSize = 1024;
+                byte[] data = File.ReadAllBytes(fileToSendPath);
+
+                NetworkStream stream = tcpClient.GetStream();
+
+                //stream = tcpClient.GetStream();
+                byte[] dataLength = BitConverter.GetBytes(data.Length);
+                stream.Write(dataLength, 0, 4);
+                int bytesSent = 0;
+                int bytesLeft = data.Length;
+                while (bytesLeft > 0)
+                {
+                    int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                    stream.Write(data, bytesSent, currentDataSize);
+                    bytesSent += currentDataSize;
+                    bytesLeft -= currentDataSize;
+                    Console.WriteLine("bytes sent " + bytesSent);
+                    Console.WriteLine("bytes left " + bytesLeft);
+                }
+                Console.WriteLine("this is my folder " + myFolder);
+                File.SetAttributes(myFolder, FileAttributes.Normal);
+                File.WriteAllBytes(myFolder, data);  //access denied
                 //Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 //client.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 Console.WriteLine("this is filename " + ofd.FileName);
                 //client.SendFile(ofd.FileName);
                 //client.SendFile(ofd.FileName, bytes, bytes, TransmitFileOptions.UseDefaultWorkerThread);
                 //listenSocket.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                listenSocket.SendFile(ofd.FileName);
-                byteCount = listenSocket.Receive(bytes, 0, listenSocket.Available, SocketFlags.None);
-                if (byteCount > 0)
-                {
-                    Console.WriteLine("mhm");
-                }
-                listenSocket.Shutdown(SocketShutdown.Both);
-                listenSocket.Close();
+                //listenSocket.SendFile(ofd.FileName);
+                //byteCount = listenSocket.Receive(bytes, 0, listenSocket.Available, SocketFlags.None);
+                //if (byteCount > 0)
+                //{
+                //    Console.WriteLine("mhm");
+                //}
+                //listenSocket.Shutdown(SocketShutdown.Both);
+                //listenSocket.Close();
                 //listenSocket.SendFile(ofd.FileName);
                 //listenSocket.Shutdown(SocketShutdown.Both);
                 //listenSocket.Close();
-                Console.WriteLine("what");
+                Console.WriteLine("exiting SendThread");
             }
-            
+            //ReceiveFileThread();
+        }
+
+        public byte[] ReceiveFile(TcpClient client)
+        {
+            client = tcpListener.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+
+            byte[] fileSizeBytes = new byte[4];
+            int bytes = stream.Read(fileSizeBytes, 0, 4);
+            int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
+
+            int bytesLeft = dataLen;
+            byte[] data = new byte[dataLen];
+
+            int bufferSize = 1024;
+            int bytesRead = 0;
+            while (bytesLeft > 0)
+            {
+                int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                if (client.Available < currentDataSize)
+                {
+                    currentDataSize = client.Available;
+                }
+
+                bytes = stream.Read(data, bytesRead, currentDataSize);
+                bytesRead += currentDataSize;
+                bytesLeft -= currentDataSize;
+            }
+            File.WriteAllBytes(myFolder, data);
+            return data;
+        }
+        private void ReceiveFileThread()
+        {
+            ReceiveFile(tcpClient);
             
         }
         public void SendTCP(string M, string IPA, Int32 PortN)
