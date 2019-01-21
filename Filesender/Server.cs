@@ -49,7 +49,7 @@ namespace Filesender
                 connectionFeedback = "Connected to server";
                 ReceiveFile();
             }
-        }
+        }   //not being used
 
 
 

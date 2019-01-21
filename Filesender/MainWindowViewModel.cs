@@ -40,7 +40,7 @@ namespace Filesender
         List<Server> serverList;
         TcpListener listenerServer;
         Socket socketServer;
-        public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnection)); } }
+        public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
 
         public MainWindowViewModel()
