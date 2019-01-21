@@ -39,7 +39,7 @@ namespace Filesender
         Server server;
         NetworkStream clientNetworkStream;
 
-        List<Server> serverList;
+        List<Server> servers;
         TcpListener listenerServer;
         Socket socketServer;
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
@@ -49,7 +49,7 @@ namespace Filesender
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
-            serverList = new List<Server>();
+            servers = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
             //server = new Server();
         }
@@ -78,7 +78,7 @@ namespace Filesender
 
         private void ServerSetup(object obj)
         {
-            listenerServer = new TcpListener(IPAddress.Any, TheirPort);
+            listenerServer = new TcpListener(IPAddress.Any, MyPort);
             listenerServer.Start();
 
             while (ListenToConnections)
@@ -87,7 +87,9 @@ namespace Filesender
                 if (socketServer != null)
                 {
                     Server ts = new Server(socketServer, listenerServer, myFolder);
-                    serverList.Add(ts);
+                    servers.Add(ts);
+                    Console.WriteLine()
+                    ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
                 }
             }
         }
