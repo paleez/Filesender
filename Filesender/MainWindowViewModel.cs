@@ -30,8 +30,8 @@ namespace Filesender
         private string myFolder = "C:\\";
         private string fileToSendPath; //mebe
 
-        public bool IsConnected { get { return isConnected; } set { isConnected = value; } }
-        private bool isConnected = true;
+        public bool Connecting { get { return isConnected; } set { isConnected = value; } }
+        private bool connecting = true;
         Thread listeningThread, connectingThread, sendThread;
 
         public Server ActiveServer { get { return server; } set { server = value; OnPropertyChanged(nameof(ActiveServer)); } }
@@ -80,9 +80,10 @@ namespace Filesender
             listenerServer = new TcpListener(IPAddress.Any, MyPort);
             listenerServer.Start();
 
-            while (isConnected)
+            while (connecting)
             {
                 socketServer = listenerServer.AcceptSocket();
+                connecting = false;
                 if (socketServer != null)
                 {
                     //Server ts = new Server(socketServer, listenerServer, myFolder);
@@ -97,6 +98,7 @@ namespace Filesender
 
         private void SendFile()
         {
+            connecting = true;
             ThreadPool.QueueUserWorkItem(SendFileThread);
         }
         private void SendFileThread(object obj)
