@@ -76,6 +76,7 @@ namespace Filesender
 
             File.WriteAllBytes(myFolder + "\\test.rar", data);
 
+            socket.Close();
             tcpClient.Close();
             networkStream.Close();
         }
