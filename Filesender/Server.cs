@@ -74,7 +74,7 @@ namespace Filesender
             }
             String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-            File.WriteAllBytes(myFolder + "\\test.jpg", data);
+            File.WriteAllBytes(myFolder + "\\test.rar", data);
 
             tcpClient.Close();
             networkStream.Close();

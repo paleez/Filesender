@@ -84,8 +84,9 @@ namespace Filesender
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
+                tcpClient.Close();
             }
-            tcpClient.Close();
+           
         }
     }
 }
