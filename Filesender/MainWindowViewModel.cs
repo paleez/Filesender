@@ -48,7 +48,6 @@ namespace Filesender
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
-            sendThread = new Thread(SendFileThread);
             servers = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
             //server = new Server();
@@ -97,9 +96,9 @@ namespace Filesender
        
         private void SendFile()
         {
-            sendThread.Start();
+            ThreadPool.QueueUserWorkItem(SendFileThread);
         }
-        private void SendFileThread()
+        private void SendFileThread(object obj)
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
@@ -137,9 +136,8 @@ namespace Filesender
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
-                sendThread.Join();
                 clientForFileTransfer.Close();
-                clientForFileTransfer.Close();
+                clientNetworkStream.Close();
             }
            
         }
