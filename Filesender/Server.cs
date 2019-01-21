@@ -41,7 +41,6 @@ namespace Filesender
             socket = tcpListener.AcceptSocket();
             if (socket != null)
             {
-                isConnected = true;
                 connectionFeedback = "Connected to server";
                 ReceiveFile();
             }
@@ -49,43 +48,39 @@ namespace Filesender
 
         public void ReceiveFile()
         {
-            Console.WriteLine(isConnected);
-            if (isConnected)
+
+            tcpClient = tcpListener.AcceptTcpClient();
+            networkStream = tcpClient.GetStream();
+            byte[] fileSizeBytes = new byte[4];
+            int bytes = networkStream.Read(fileSizeBytes, 0, 4);
+            int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
+
+            int bytesLeft = dataLen;
+            byte[] data = new byte[dataLen];
+
+            int bufferSize = 1024;
+            int bytesRead = 0;
+            while (bytesLeft > 0)
             {
-                tcpClient = tcpListener.AcceptTcpClient();
-                networkStream = tcpClient.GetStream();
-                byte[] fileSizeBytes = new byte[4];
-                int bytes = networkStream.Read(fileSizeBytes, 0, 4);
-                int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
-
-                int bytesLeft = dataLen;
-                byte[] data = new byte[dataLen];
-
-                int bufferSize = 1024;
-                int bytesRead = 0;
-                while (bytesLeft > 0)
+                int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                if (tcpClient.Available < currentDataSize)
                 {
-                    int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                    if (tcpClient.Available < currentDataSize)
-                    {
-                        currentDataSize = tcpClient.Available;
-                    }
-
-                    bytes = networkStream.Read(data, bytesRead, currentDataSize);
-                    bytesRead += currentDataSize;
-                    bytesLeft -= currentDataSize;
+                    currentDataSize = tcpClient.Available;
                 }
-                String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-                File.WriteAllBytes(myFolder + "\\test.jpg", data);
+                bytes = networkStream.Read(data, bytesRead, currentDataSize);
+                bytesRead += currentDataSize;
+                bytesLeft -= currentDataSize;
             }
+            String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            File.WriteAllBytes(myFolder + "\\test.jpg", data);
+
+            tcpClient.Close();
+            networkStream.Close();
         }
 
         private void ChooseFolder()
-        {
-            ThreadPool.QueueUserWorkItem(ChooseFolderThreadPool);
-        }
-        private void ChooseFolderThreadPool(object o)
         {
             var dialog = new CommonOpenFileDialog()
             {
@@ -106,5 +101,6 @@ namespace Filesender
                 myFolder = dialog.FileName;
             }
         }
+
     }
 }

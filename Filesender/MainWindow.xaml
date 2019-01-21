@@ -23,7 +23,6 @@
         <Button Command="{Binding SendFileCommand}" Content="File to send" HorizontalAlignment="Right" Margin="0,216,297,0" VerticalAlignment="Top" Width="75"/>
         <ProgressBar HorizontalAlignment="Right" Height="10" Margin="0,262,272,0" VerticalAlignment="Top" Width="100"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,241,306,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
-        <Button Command="{Binding ConnectCommand}" Content="Connect" HorizontalAlignment="Right" Margin="0,155,297,0" VerticalAlignment="Top" Width="75"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,203,0,0" TextWrapping="Wrap" Text="start server for debug" VerticalAlignment="Top" Width="120" Height="23"/>
         <ProgressBar HorizontalAlignment="Left" Height="0" Margin="420,262,0,0" VerticalAlignment="Top" Width="46"/>
 

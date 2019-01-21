@@ -22,9 +22,9 @@ namespace Filesender
         public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
         private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
-        private string theirIp = "212.116.64.211";
+        private string theirIp;
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
-        private int theirPort = 6096;
+        private int theirPort;
         private string myFolder = "C:\\";
         private string fileToSendPath; //mebe
 
@@ -39,36 +39,12 @@ namespace Filesender
 
         public MainWindowViewModel()
         {
-            ConnectCommand = new Command(Connect);
             SendFileCommand = new Command(SendFile);
-
-           
-
-            //listeningThread = new Thread(StartServerThread);
-            //connectingThread = new Thread(ConnectThread);
             server = new Server();
         }
         
-        private void Connect()
-        {
-            //connectingThread.Start(); // delete
-            ConnectThread();
-        }
-        private void ConnectThread() // this method will be removed completely
-        {
-            IPHostEntry ipEntry = Dns.GetHostEntry(TheirIp);
-            IPAddress ip = ipEntry.AddressList[0];
-            TcpClient tempClient = new TcpClient();
-            tcpClient = tempClient;
-            Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
-            tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-
-
-            //Socket clientSocket = new Socket(AddressFamily.InterNetwork,
-            //SocketType.Stream, ProtocolType.Tcp);
-            //clientSocket.Connect(new IPEndPoint(IPAddress.Parse(TheirIp), theirPort));
-
-        }
+       
+       
         private void SendFile()
         {
             ThreadPool.QueueUserWorkItem(SendFileThreadPool);
@@ -79,8 +55,8 @@ namespace Filesender
             {
                 Filter = "All Files (*.*)|*.*"
             };
-
             var res = ofd.ShowDialog();
+
             if ((bool)res)
             {
                 TcpClient tempClient = new TcpClient();
@@ -109,6 +85,7 @@ namespace Filesender
                     bytesLeft -= currentDataSize;
                 }
             }
+            tcpClient.Close();
         }
     }
 }
