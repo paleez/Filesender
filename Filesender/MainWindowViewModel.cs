@@ -33,11 +33,10 @@ namespace Filesender
         public bool IsConnected { get { return isConnected; } set { isConnected = value; OnPropertyChanged(nameof(IsConnected)); } }
         private bool isConnected = false;
         Thread listeningThread, connectingThread, sendThread;
-
-        TcpClient tcpClient;
+        
         public Server ActiveServer { get { return server; } set { server = value; OnPropertyChanged(nameof(ActiveServer)); } }
         Server server;
-        NetworkStream clientNetworkStream;
+        
 
         List<Server> servers;
         TcpListener listenerServer;
@@ -108,20 +107,23 @@ namespace Filesender
 
             if ((bool)res)
             {
-                TcpClient tempClient = new TcpClient();
-                tcpClient = tempClient;
-                tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                tcpClient.Close();
+                
+                TcpClient tempTcp = new TcpClient();
+                tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                tempTcp.Close();
+                Console.WriteLine("temptcp is closed");
                 Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
                 Console.WriteLine("this is port " + TheirPort);
 
                 fileToSendPath = ofd.FileName;
                 int bufferSize = 1024;
                 byte[] data = File.ReadAllBytes(fileToSendPath);
+
                 TcpClient clientForFileTransfer = new TcpClient();
-                tcpClient = clientForFileTransfer;
-                tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                clientNetworkStream = tcpClient.GetStream();
+                NetworkStream clientNetworkStream;
+                clientForFileTransfer.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                clientNetworkStream = clientForFileTransfer.GetStream();
+
                 byte[] dataLength = BitConverter.GetBytes(data.Length);
                 clientNetworkStream.Write(dataLength, 0, 4);
                 int bytesSent = 0;
@@ -133,7 +135,8 @@ namespace Filesender
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
-                tcpClient.Close();
+                clientForFileTransfer.Close();
+                clientForFileTransfer.Close();
             }
            
         }
