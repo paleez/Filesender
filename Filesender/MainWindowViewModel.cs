@@ -86,7 +86,7 @@ namespace Filesender
                 socketServer = listenerServer.AcceptSocket();
                 if (socketServer != null)
                 {
-                    Server ts = new Server(socketServer, listenerServer);
+                    Server ts = new Server(socketServer, listenerServer, myFolder);
                     serverList.Add(ts);
                 }
             }
