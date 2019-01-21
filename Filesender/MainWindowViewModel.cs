@@ -80,17 +80,18 @@ namespace Filesender
             listenerServer = new TcpListener(IPAddress.Any, MyPort);
             listenerServer.Start();
 
-            while (true)
-            {
+           
                 socketServer = listenerServer.AcceptSocket();
                 if (socketServer != null)
                 {
                     Server ts = new Server(socketServer, listenerServer, myFolder);
-                    //servers.Add(ts);
-                    //Console.WriteLine(servers.Count);
-                    //ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
-                }
+                //servers.Add(ts);
+                //Console.WriteLine(servers.Count);
+                //ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
+                listenerServer.Stop();
             }
+            
+           
         }
        
         private void SendFile()
