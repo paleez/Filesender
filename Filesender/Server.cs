@@ -37,7 +37,7 @@ namespace Filesender
             this.socket = socket;
             this.myFolder = myFolder;
             //ThreadPool.QueueUserWorkItem(Listen);
-            //ReceiveFile();
+            ReceiveFile(this);
         }
 
         private void Listen(object obj)
@@ -84,6 +84,7 @@ namespace Filesender
             String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string uh = "" + dataLen + ".rar";
             File.WriteAllBytes(myFolder + "\\" + uh, data);
+
             listenerServer.Stop();
             socket.Close();
             tcpClient.Close();
