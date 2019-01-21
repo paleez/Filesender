@@ -37,13 +37,35 @@ namespace Filesender
         Server server;
         NetworkStream clientNetworkStream;
 
+        List<Server> serverList;
+        TcpListener listenerServer;
+        Socket socketServer;
+        public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnection)); } }
+        bool listenToConnections = true;
+
         public MainWindowViewModel()
         {
             SendFileCommand = new Command(SendFile);
-            server = new Server();
+            serverList = new List<Server>();
+            ThreadPool.QueueUserWorkItem(ServerSetup);
+            //server = new Server();
         }
         
-       
+        private void ServerSetup(object obj)
+        {
+            listenerServer = new TcpListener(IPAddress.Any, TheirPort);
+            listenerServer.Start();
+
+            while (ListenToConnections)
+            {
+                socketServer = listenerServer.AcceptSocket();
+                if (socketServer != null)
+                {
+                    Server ts = new Server(socketServer, listenerServer);
+                    serverList.Add(ts);
+                }
+            }
+        }
        
         private void SendFile()
         {

@@ -25,22 +25,25 @@ namespace Filesender
 
         private bool isConnected = false;
         Socket socket;
-        TcpListener serverListener;
+        TcpListener listenerServer;
         NetworkStream networkStream;
         TcpClient tcpClient;
 
         Thread wh;
-        public Server()
+        public Server(Socket socket, TcpListener listenerServer)
         {
             ChooseFolderCommand = new Command(ChooseFolder);
-            ThreadPool.QueueUserWorkItem(Listen);
+            this.listenerServer = listenerServer;
+            this.socket = socket;
+            //ThreadPool.QueueUserWorkItem(Listen);
+            ReceiveFile();
         }
 
         private void Listen(object obj)
         {
-            serverListener = new TcpListener(IPAddress.Any, ServerPort);
-            serverListener.Start();
-            socket = serverListener.AcceptSocket();
+            listenerServer = new TcpListener(IPAddress.Any, ServerPort);
+            listenerServer.Start();
+            socket = listenerServer.AcceptSocket();
             if (socket != null)
             {
                 connectionFeedback = "Connected to server";
@@ -54,7 +57,7 @@ namespace Filesender
         public void ReceiveFile()
         {
             Console.WriteLine("we are in");
-            tcpClient = serverListener.AcceptTcpClient();
+            tcpClient = listenerServer.AcceptTcpClient();
             networkStream = tcpClient.GetStream();
             byte[] fileSizeBytes = new byte[4];
             int bytes = networkStream.Read(fileSizeBytes, 0, 4);
@@ -80,7 +83,7 @@ namespace Filesender
             String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string uh = "" + dataLen + ".rar";
             File.WriteAllBytes(myFolder + "\\" + uh, data);
-            serverListener.Stop();
+            listenerServer.Stop();
             socket.Close();
             tcpClient.Close();
             networkStream.Close();
