@@ -21,7 +21,7 @@ namespace Filesender
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
+        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); } }
         private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "212.116.64.211";
@@ -30,13 +30,13 @@ namespace Filesender
         private string myFolder = "C:\\";
         private string fileToSendPath; //mebe
 
-        public bool IsConnected { get { return isConnected; } set { isConnected = value; OnPropertyChanged(nameof(IsConnected)); } }
-        private bool isConnected = false;
+        public bool IsConnected { get { return isConnected; } set { isConnected = value; } }
+        private bool isConnected = true;
         Thread listeningThread, connectingThread, sendThread;
-        
+
         public Server ActiveServer { get { return server; } set { server = value; OnPropertyChanged(nameof(ActiveServer)); } }
         Server server;
-        
+
 
         List<Server> servers;
         TcpListener listenerServer;
@@ -80,20 +80,21 @@ namespace Filesender
             listenerServer = new TcpListener(IPAddress.Any, MyPort);
             listenerServer.Start();
 
-           
+            while (isConnected)
+            {
                 socketServer = listenerServer.AcceptSocket();
                 if (socketServer != null)
                 {
-                    Server ts = new Server(socketServer, listenerServer, myFolder);
-                //servers.Add(ts);
-                //Console.WriteLine(servers.Count);
-                //ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
-                listenerServer.Stop();
+                    //Server ts = new Server(socketServer, listenerServer, myFolder);
+                    servers.Add(new Server(socketServer, listenerServer, myFolder));
+                    //Console.WriteLine(servers.Count);
+                    //ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
+                    listenerServer.Stop();
+                    servers.RemoveAt(0);
+                }
             }
-            
-           
         }
-       
+
         private void SendFile()
         {
             ThreadPool.QueueUserWorkItem(SendFileThread);
@@ -108,7 +109,7 @@ namespace Filesender
 
             if ((bool)res)
             {
-                
+
                 TcpClient tempTcp = new TcpClient();
                 tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 tempTcp.Close();
@@ -139,7 +140,7 @@ namespace Filesender
                 clientForFileTransfer.Close();
                 clientNetworkStream.Close();
             }
-           
+
         }
     }
 }
