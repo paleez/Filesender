@@ -91,11 +91,18 @@ namespace Filesender
         }
         private void ConnectThread()
         {
-            TcpClient tc = new TcpClient();
-            tcpClient = tc;
-            Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
-            tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-           
+            //IPHostEntry ipEntry = Dns.GetHostEntry(TheirIp);
+            //IPAddress ip = ipEntry.AddressList[0];
+            //TcpClient tc = new TcpClient(ip.ToString(), TheirPort);
+            //tcpClient = tc;
+            //Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
+            //tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
+
+
+            Socket clientSocket = new Socket(AddressFamily.InterNetwork,
+            SocketType.Stream, ProtocolType.Tcp);
+            clientSocket.Connect(new IPEndPoint(IPAddress.Parse(TheirIp), theirPort));
+
         }
         private void StartServer()
         {
