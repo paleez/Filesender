@@ -12,7 +12,7 @@
         <TextBox HorizontalAlignment="Left" Height="23" Margin="49,113,0,0" TextWrapping="Wrap" Text="{Binding MyPort}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,49,0,0" TextWrapping="Wrap" Text="Your computer" VerticalAlignment="Top"/>
         <TextBlock HorizontalAlignment="Left" Margin="46,151,0,0" TextWrapping="Wrap" Text="Set received files folder" VerticalAlignment="Top" Height="19"/>
-        <Button Command="{Binding ActiveServer.ChooseFolderCommand}" Content="Choose folder" HorizontalAlignment="Left" Margin="49,175,0,0" VerticalAlignment="Top" Width="120" Height="23"/>
+        <Button Command="{Binding ChooseFolderCommand}" Content="Choose folder" HorizontalAlignment="Left" Margin="49,175,0,0" VerticalAlignment="Top" Width="120" Height="23"/>
 
         <Button Command="{Binding StartMyServerCommand}" Content="Start server" HorizontalAlignment="Left" Margin="49,231,0,0" VerticalAlignment="Top" Width="120" Height="41"/>
         <TextBox HorizontalAlignment="Right" Height="23" Margin="0,82,252,0" TextWrapping="Wrap" Text="{Binding TheirIp}" VerticalAlignment="Top" Width="120"/>

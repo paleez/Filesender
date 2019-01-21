@@ -15,6 +15,8 @@ namespace Filesender
 {
     class MainWindowViewModel : ViewModelBase
     {
+        public ICommand ChooseFolderCommand { get; }
+
         public ICommand ConnectCommand { get; }
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
@@ -45,12 +47,35 @@ namespace Filesender
 
         public MainWindowViewModel()
         {
+            ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
             serverList = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
             //server = new Server();
         }
-        
+
+        private void ChooseFolder()
+        {
+            var dialog = new CommonOpenFileDialog()
+            {
+                Title = "Select Folder",
+                IsFolderPicker = true,
+                AddToMostRecentlyUsedList = false,
+                AllowNonFileSystemItems = false,
+                EnsureFileExists = true,
+                EnsurePathExists = true,
+                EnsureReadOnly = false,
+                EnsureValidNames = true,
+                Multiselect = false,
+                ShowPlacesList = true
+            };
+
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                myFolder = dialog.FileName;
+            }
+        }
+
         private void ServerSetup(object obj)
         {
             listenerServer = new TcpListener(IPAddress.Any, TheirPort);

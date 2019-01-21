@@ -30,11 +30,12 @@ namespace Filesender
         TcpClient tcpClient;
 
         Thread wh;
-        public Server(Socket socket, TcpListener listenerServer)
+        public Server(Socket socket, TcpListener listenerServer, string myFolder)
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             this.listenerServer = listenerServer;
             this.socket = socket;
+            this.myFolder = myFolder;
             //ThreadPool.QueueUserWorkItem(Listen);
             ReceiveFile();
         }
