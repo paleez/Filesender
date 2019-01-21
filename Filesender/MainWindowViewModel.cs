@@ -15,14 +15,12 @@ namespace Filesender
 {
     class MainWindowViewModel : ViewModelBase
     {
-        public ICommand ChooseFolderCommand { get; }
         public ICommand ConnectCommand { get; }
-        public ICommand SetMyPortCommand { get; }
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        //public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
-        //private int myPort = 6096;
+        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
+        private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "212.116.64.211";
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
@@ -49,17 +47,16 @@ namespace Filesender
 
         public MainWindowViewModel()
         {
-            ChooseFolderCommand = new Command(ChooseFolder);
             ConnectCommand = new Command(Connect);
             SendFileCommand = new Command(SendFile);
-            StartMyServerCommand = new Command(StartServerThread);
+            StartMyServerCommand = new Command(StartServer);
            
 
             //listeningThread = new Thread(StartServerThread);
             //connectingThread = new Thread(ConnectThread);
             sendThread = new Thread(SendFileThread);
 
-            //server = new Server();
+            server = new Server();
         }
 
         private void ChooseFolder()
@@ -106,8 +103,9 @@ namespace Filesender
         }
         private void StartServer()
         {
-            listeningThread.Start();
+            //listeningThread.Start();
             //StartServerThread();
+            server = new Server();
         }
         private void StartServerThread()
         {
