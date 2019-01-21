@@ -88,7 +88,7 @@ namespace Filesender
                 {
                     Server ts = new Server(socketServer, listenerServer, myFolder);
                     servers.Add(ts);
-                    Console.WriteLine()
+                    Console.WriteLine(servers.Count);
                     ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
                 }
             }

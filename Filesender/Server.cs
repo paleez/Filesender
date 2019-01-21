@@ -37,7 +37,7 @@ namespace Filesender
             this.socket = socket;
             this.myFolder = myFolder;
             //ThreadPool.QueueUserWorkItem(Listen);
-            ReceiveFile();
+            //ReceiveFile();
         }
 
         private void Listen(object obj)
@@ -48,14 +48,14 @@ namespace Filesender
             if (socket != null)
             {
                 connectionFeedback = "Connected to server";
-                ReceiveFile();
+                //ReceiveFile();
             }
         }   //not being used
 
 
 
 
-        public void ReceiveFile()
+        public void ReceiveFile(object obj)
         {
             Console.WriteLine("we are in");
             tcpClient = listenerServer.AcceptTcpClient();
