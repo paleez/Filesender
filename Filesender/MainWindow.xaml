@@ -9,7 +9,7 @@
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="19,115,0,0" TextWrapping="Wrap" Text="Port" VerticalAlignment="Top" Width="25" Height="21"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,75,0,0" TextWrapping="Wrap" Text="{Binding ActiveServer.ConnectionFeedback}" VerticalAlignment="Top" Width="120" Height="30"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="49,113,0,0" TextWrapping="Wrap" Text="{Binding ActiveServer.MyPort}" VerticalAlignment="Top" Width="120"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="49,113,0,0" TextWrapping="Wrap" Text="{Binding MyPort}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,49,0,0" TextWrapping="Wrap" Text="Your computer" VerticalAlignment="Top"/>
         <TextBlock HorizontalAlignment="Left" Margin="46,151,0,0" TextWrapping="Wrap" Text="Set received files folder" VerticalAlignment="Top" Height="19"/>
         <Button Command="{Binding ActiveServer.ChooseFolderCommand}" Content="Choose folder" HorizontalAlignment="Left" Margin="49,175,0,0" VerticalAlignment="Top" Width="120" Height="23"/>

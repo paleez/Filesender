@@ -15,14 +15,12 @@ namespace Filesender
 {
     class MainWindowViewModel : ViewModelBase
     {
-        public ICommand ChooseFolderCommand { get; }
         public ICommand ConnectCommand { get; }
-        public ICommand SetMyPortCommand { get; }
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        //public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
-        //private int myPort = 6096;
+        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
+        private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "212.116.64.211";
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
@@ -41,39 +39,16 @@ namespace Filesender
 
         public MainWindowViewModel()
         {
-            ChooseFolderCommand = new Command(ChooseFolder);
             ConnectCommand = new Command(Connect);
             SendFileCommand = new Command(SendFile);
-            connectingThread = new Thread(ConnectThread);
-            //sendThread = new Thread(SendFileThread);
-        }
 
-        private void ChooseFolder()
-        {
-            ThreadPool.QueueUserWorkItem(ChooseFolderThreadPool);
-        }
-        private void ChooseFolderThreadPool(object o)
-        {
-            var dialog = new CommonOpenFileDialog()
-            {
-                Title = "Select Folder",
-                IsFolderPicker = true,
-                AddToMostRecentlyUsedList = false,
-                AllowNonFileSystemItems = false,
-                EnsureFileExists = true,
-                EnsurePathExists = true,
-                EnsureReadOnly = false,
-                EnsureValidNames = true,
-                Multiselect = false,
-                ShowPlacesList = true
-            };
+           
 
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                myFolder = dialog.FileName;
-            }
+            //listeningThread = new Thread(StartServerThread);
+            //connectingThread = new Thread(ConnectThread);
+            server = new Server();
         }
-
+        
         private void Connect()
         {
             //connectingThread.Start(); // delete
@@ -94,7 +69,10 @@ namespace Filesender
             //clientSocket.Connect(new IPEndPoint(IPAddress.Parse(TheirIp), theirPort));
 
         }
-
+        private void SendFile()
+        {
+            ThreadPool.QueueUserWorkItem(SendFileThreadPool);
+        }
         private void SendFileThreadPool(object o)
         {
             OpenFileDialog ofd = new OpenFileDialog
@@ -130,50 +108,6 @@ namespace Filesender
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
-            }
-        }
-        private void SendFile()
-        {
-            //sendThread.Start();
-            //SendFileThread();
-            ThreadPool.QueueUserWorkItem(SendFileThreadPool);
-        }
-        private void SendFileThread()
-        {
-            OpenFileDialog ofd = new OpenFileDialog
-            {
-                Filter = "All Files (*.*)|*.*"
-            };
-
-            var res = ofd.ShowDialog();
-            if ((bool)res)
-            {
-                TcpClient tempClient = new TcpClient();
-                tcpClient = tempClient;
-                tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                tcpClient.Close();
-                Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
-                Console.WriteLine("this is port " + TheirPort);
-                
-                fileToSendPath = ofd.FileName;
-                int bufferSize = 1024;
-                byte[] data = File.ReadAllBytes(fileToSendPath);
-                TcpClient clientForFileTransfer = new TcpClient();
-                tcpClient = clientForFileTransfer;
-                tcpClient.Connect(IPAddress.Parse(TheirIp), TheirPort);
-                clientNetworkStream = tcpClient.GetStream();
-                byte[] dataLength = BitConverter.GetBytes(data.Length);
-                clientNetworkStream.Write(dataLength, 0, 4);
-                int bytesSent = 0;
-                int bytesLeft = data.Length;
-                while (bytesLeft > 0)
-                {
-                    int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                    clientNetworkStream.Write(data, bytesSent, currentDataSize);
-                    bytesSent += currentDataSize;
-                    bytesLeft -= currentDataSize;
-                }
-                tcpClient.Close();
             }
         }
     }

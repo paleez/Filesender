@@ -18,8 +18,8 @@ namespace Filesender
         public ICommand ChooseFolderCommand { get; }
         private string myFolder = "C:\\";
         public ICommand StartMyServerCommand { get; }
-        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); } }
-        private int myPort = 6096;
+        public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); } }
+        private int serverPort = 6096;
         public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); } }
         private string connectionFeedback = "Waiting for connection";
 
@@ -36,7 +36,7 @@ namespace Filesender
 
         private void Listen(object obj)
         {
-            tcpListener = new TcpListener(IPAddress.Any, MyPort);
+            tcpListener = new TcpListener(IPAddress.Any, ServerPort);
             tcpListener.Start();
             socket = tcpListener.AcceptSocket();
             if (socket != null)
@@ -83,6 +83,10 @@ namespace Filesender
 
         private void ChooseFolder()
         {
+            ThreadPool.QueueUserWorkItem(ChooseFolderThreadPool);
+        }
+        private void ChooseFolderThreadPool(object o)
+        {
             var dialog = new CommonOpenFileDialog()
             {
                 Title = "Select Folder",
@@ -101,7 +105,6 @@ namespace Filesender
             {
                 myFolder = dialog.FileName;
             }
-            int tes = 0;
         }
     }
 }
