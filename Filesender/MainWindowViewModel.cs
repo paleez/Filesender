@@ -24,9 +24,9 @@ namespace Filesender
         public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); }  }
         private int myPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
-        private string theirIp;
+        private string theirIp = "212.116.64.211";
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
-        private int theirPort;
+        private int theirPort = 6096;
         private string myFolder = "C:\\";
         private string fileToSendPath; //mebe
 
