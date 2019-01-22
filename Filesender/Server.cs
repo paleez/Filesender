@@ -16,7 +16,7 @@ namespace Filesender
     class Server : ViewModelBase
     {
         public ICommand ChooseFolderCommand { get; }
-        private string myFolder = "C:\\";
+        private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
         public ICommand StartMyServerCommand { get; }
         public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); } }
         private int serverPort = 6096;
@@ -58,12 +58,15 @@ namespace Filesender
         public void ReceiveFile(object obj)
         {
             Console.WriteLine("we are in");
+            connectionFeedback = "Connected";
             tcpClient = listenerServer.AcceptTcpClient();
             networkStream = tcpClient.GetStream();
+
+            
             byte[] fileSizeBytes = new byte[4];
             int bytes = networkStream.Read(fileSizeBytes, 0, 4);
             int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
-
+            
             int bytesLeft = dataLen;
             byte[] data = new byte[dataLen];
 
@@ -83,7 +86,7 @@ namespace Filesender
             }
             String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string uh = "" + dataLen + ".rar";
-            File.WriteAllBytes(myFolder + "\\" + uh, data);
+            File.WriteAllBytes(myFolder + uh, data);
 
             listenerServer.Stop();
             socket.Close();

@@ -16,27 +16,21 @@ namespace Filesender
     class MainWindowViewModel : ViewModelBase
     {
         public ICommand ChooseFolderCommand { get; }
-
         public ICommand ConnectCommand { get; }
         public ICommand StartMyServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        public int MyPort { get { return myPort; } set { myPort = value; OnPropertyChanged(nameof(MyPort)); } }
-        private int myPort = 6096;
+        public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
+        private int localPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "212.116.64.211";
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
         private int theirPort = 6096;
-        private string myFolder = "C:\\";
+        private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
         private string fileToSendPath; //mebe
-
-        public bool Connecting { get { return isConnected; } set { isConnected = value; } }
-        private bool connecting = true;
-        Thread listeningThread, connectingThread, sendThread;
 
         public Server ActiveServer { get { return server; } set { server = value; OnPropertyChanged(nameof(ActiveServer)); } }
         Server server;
-
 
         List<Server> servers;
         TcpListener listenerServer;
@@ -50,7 +44,6 @@ namespace Filesender
             SendFileCommand = new Command(SendFile);
             servers = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
-            //server = new Server();
         }
 
         private void ChooseFolder()
@@ -77,19 +70,16 @@ namespace Filesender
 
         private void ServerSetup(object obj)
         {
-            listenerServer = new TcpListener(IPAddress.Any, MyPort);
-            listenerServer.Start();
-
-            while (connecting)
+            while (true)
             {
+                listenerServer = new TcpListener(IPAddress.Any, LocalPort);
+                listenerServer.Start();
                 socketServer = listenerServer.AcceptSocket();
-                connecting = false;
                 if (socketServer != null)
                 {
-                    //Server ts = new Server(socketServer, listenerServer, myFolder);
                     servers.Add(new Server(socketServer, listenerServer, myFolder));
-                    //Console.WriteLine(servers.Count);
-                    //ThreadPool.QueueUserWorkItem(servers[servers.Count - 1].ReceiveFile);
+                    server = servers.ElementAt(0);
+                    socketServer.Close();
                     listenerServer.Stop();
                     servers.RemoveAt(0);
                 }
@@ -98,7 +88,6 @@ namespace Filesender
 
         private void SendFile()
         {
-            connecting = true;
             ThreadPool.QueueUserWorkItem(SendFileThread);
         }
         private void SendFileThread(object obj)
@@ -111,13 +100,9 @@ namespace Filesender
 
             if ((bool)res)
             {
-
                 TcpClient tempTcp = new TcpClient();
                 tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 tempTcp.Close();
-                Console.WriteLine("temptcp is closed");
-                Console.WriteLine("This is their ip " + IPAddress.Parse(TheirIp));
-                Console.WriteLine("this is port " + TheirPort);
 
                 fileToSendPath = ofd.FileName;
                 int bufferSize = 1024;
@@ -142,7 +127,6 @@ namespace Filesender
                 clientForFileTransfer.Close();
                 clientNetworkStream.Close();
             }
-
         }
     }
 }
