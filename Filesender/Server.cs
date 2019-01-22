@@ -83,9 +83,6 @@ namespace Filesender
                 bl -= cds;
             }
             string filename = Encoding.UTF8.GetString(filenameBuffer);
-            
-            //networkStream.Read(filenameBuffer, 0, size);
-            //string filename = Encoding.UTF8.GetString(fileSizeBytes);
 
             //receive the filesize
             byte[] fileSizeBytes = new byte[4];
@@ -109,7 +106,7 @@ namespace Filesender
             }
             String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string uh = "" + filename + ".rar";
-            File.WriteAllBytes(myFolder + uh, data);
+            File.WriteAllBytes(myFolder + "\\" + filename, data);
 
             listenerServer.Stop();
             socket.Close();

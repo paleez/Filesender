@@ -113,7 +113,7 @@ namespace Filesender
                 fileToSendPath = ofd.FileName;
                 string filename = ofd.SafeFileName;
                 int bufferSize = 1024;
-                byte[] fname = File.ReadAllBytes(filename);
+                byte[] fname = Encoding.UTF8.GetBytes(filename);
                 byte[] fLen = BitConverter.GetBytes(fname.Length);
                 int bs = 0;
                 int bl = fname.Length;
@@ -124,7 +124,7 @@ namespace Filesender
                     bs += cds;
                     bl -= cds;
                 }
-
+           
                 //sending the file size
                 byte[] data = File.ReadAllBytes(fileToSendPath);
                 byte[] dataLength = BitConverter.GetBytes(data.Length);
@@ -134,12 +134,12 @@ namespace Filesender
                 while (bytesLeft > 0) // send the file
                 {
                     int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                    //clientNetworkStream.Write(data, bytesSent, currentDataSize);
+                    clientNetworkStream.Write(data, bytesSent, currentDataSize);
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
-                //clientForFileTransfer.Close();
-                //clientNetworkStream.Close();
+                clientForFileTransfer.Close();
+                clientNetworkStream.Close();
             }
         }
     }
