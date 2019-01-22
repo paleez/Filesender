@@ -115,16 +115,9 @@ namespace Filesender
                 int bufferSize = 1024;
                 byte[] fname = Encoding.UTF8.GetBytes(filename);
                 byte[] fLen = BitConverter.GetBytes(fname.Length);
-                int bs = 0;
-                int bl = fname.Length;
-                while (bl > 0) // send the file
-                {
-                    int cds = Math.Min(bufferSize, bl);
-                    clientNetworkStream.Write(fname, bs, cds);
-                    bs += cds;
-                    bl -= cds;
-                }
-           
+                clientNetworkStream.Write(fLen, 0, 4);
+                clientNetworkStream.Write(fname, 0, fname.Length);
+
                 //sending the file size
                 byte[] data = File.ReadAllBytes(fileToSendPath);
                 byte[] dataLength = BitConverter.GetBytes(data.Length);

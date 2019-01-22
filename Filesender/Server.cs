@@ -65,24 +65,10 @@ namespace Filesender
             //receive the filename size and filename first
             byte[] fsb = new byte[4];
             int b = networkStream.Read(fsb, 0, 4);
-
-            int dl = BitConverter.ToInt32(fsb, 0);
-            int bl = dl;
-            byte[] filenameBuffer = new byte[dl];
-            int bfs = 1024;
-            int bsr = 0;
-            while (bl > 0)
-            {
-                int cds = Math.Min(bfs, bl);
-                if (tcpClient.Available < cds)
-                {
-                    cds = tcpClient.Available;
-                }
-                b = networkStream.Read(filenameBuffer, bsr, cds);
-                bsr += cds;
-                bl -= cds;
-            }
-            string filename = Encoding.UTF8.GetString(filenameBuffer);
+            int s = BitConverter.ToInt32(fsb, 0);
+            byte[] filenameBuf = new byte[s];
+            networkStream.Read(filenameBuf, 0, s);
+            string filename = Encoding.UTF8.GetString(filenameBuf);
 
             //receive the filesize
             byte[] fileSizeBytes = new byte[4];
