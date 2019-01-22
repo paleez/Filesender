@@ -38,7 +38,7 @@ namespace Filesender
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
 
-        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(Progress)); } }
+        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(progress)); } }
         private int progress = 0;
         
 
@@ -129,12 +129,19 @@ namespace Filesender
                 clientNetworkStream.Write(dataLength, 0, 4);
                 int bytesSent = 0;
                 int bytesLeft = data.Length;
+                
+
+                int pc = 0;
                 while (bytesLeft > 0) // send the file
                 {
                     int currentDataSize = Math.Min(bufferSize, bytesLeft);
                     Console.WriteLine("progressvalue " + progress);
+                    // x = a + (X - A) * (b - a) / (B - A)
+
+
+                    progress += 1;
                     clientNetworkStream.Write(data, bytesSent, currentDataSize);
-                    Progress += 10;
+                  
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
