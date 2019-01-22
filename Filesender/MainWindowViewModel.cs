@@ -38,12 +38,17 @@ namespace Filesender
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
 
+        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(Progress)); } }
+        private int progress;
+        
+
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
             servers = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
+            progress = 80;
         }
 
         private void ChooseFolder()
