@@ -62,15 +62,37 @@ namespace Filesender
             tcpClient = listenerServer.AcceptTcpClient();
             networkStream = tcpClient.GetStream();
 
+            //receive the filename size and filename first
+            byte[] fsb = new byte[4];
+            int b = networkStream.Read(fsb, 0, 4);
+
+            int dl = BitConverter.ToInt32(fsb, 0);
+            int bl = dl;
+            byte[] filenameBuffer = new byte[dl];
+            int bfs = 1024;
+            int bsr = 0;
+            while (bl > 0)
+            {
+                int cds = Math.Min(bfs, bl);
+                if (tcpClient.Available < cds)
+                {
+                    cds = tcpClient.Available;
+                }
+                b = networkStream.Read(filenameBuffer, bsr, cds);
+                bsr += cds;
+                bl -= cds;
+            }
+            string filename = Encoding.UTF8.GetString(filenameBuffer);
             
+            //networkStream.Read(filenameBuffer, 0, size);
+            //string filename = Encoding.UTF8.GetString(fileSizeBytes);
+
+            //receive the filesize
             byte[] fileSizeBytes = new byte[4];
             int bytes = networkStream.Read(fileSizeBytes, 0, 4);
-            string filename = UTF8Encoding.UTF8.GetString(fileSizeBytes);
             int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
-            
             int bytesLeft = dataLen;
             byte[] data = new byte[dataLen];
-
             int bufferSize = 1024;
             int bytesRead = 0;
             while (bytesLeft > 0)
