@@ -104,15 +104,14 @@ namespace Filesender
                 tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 tempTcp.Close();
 
-                fileToSendPath = ofd.FileName;
-                int bufferSize = 1024;
-                byte[] data = File.ReadAllBytes(fileToSendPath);
-
                 TcpClient clientForFileTransfer = new TcpClient();
                 NetworkStream clientNetworkStream;
                 clientForFileTransfer.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 clientNetworkStream = clientForFileTransfer.GetStream();
 
+                fileToSendPath = ofd.FileName;
+                int bufferSize = 1024;
+                byte[] data = File.ReadAllBytes(fileToSendPath);
                 byte[] dataLength = BitConverter.GetBytes(data.Length);
                 clientNetworkStream.Write(dataLength, 0, 4);
                 int bytesSent = 0;
