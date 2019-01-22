@@ -2,6 +2,7 @@
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,7 +10,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Filesender
 {
@@ -40,16 +43,18 @@ namespace Filesender
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
 
-        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(Progress)); } }
-        private int progress;
-        
+        public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
+        private int progress = 0;
+
+        Thread t1;
 
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
             servers = new List<Server>();
-            ThreadPool.QueueUserWorkItem(ServerSetup);   
+            //t1 = new Thread(RunFile);
+            ThreadPool.QueueUserWorkItem(ServerSetup);
         }
 
         private void ChooseFolder()
@@ -92,6 +97,62 @@ namespace Filesender
             }
         }
 
+        //private void RunFile()
+        //{
+        //    if ((bool)res)
+        //    {
+        //        t1.Start();
+        //        TcpClient tempTcp = new TcpClient();
+        //        tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
+        //        tempTcp.Close();
+
+        //        TcpClient clientForFileTransfer = new TcpClient();
+        //        NetworkStream clientNetworkStream;
+        //        clientForFileTransfer.Connect(IPAddress.Parse(TheirIp), TheirPort);
+        //        clientNetworkStream = clientForFileTransfer.GetStream();
+
+        //        //have to send filename 
+        //        fileToSendPath = ofd.FileName;
+        //        string filename = ofd.SafeFileName;
+        //        int bufferSize = 1024;
+        //        byte[] fname = Encoding.UTF8.GetBytes(filename);
+        //        byte[] fLen = BitConverter.GetBytes(fname.Length);
+        //        clientNetworkStream.Write(fLen, 0, 4);
+        //        clientNetworkStream.Write(fname, 0, fname.Length);
+
+        //        //sending the file size
+        //        byte[] data = File.ReadAllBytes(fileToSendPath);
+        //        byte[] dataLength = BitConverter.GetBytes(data.Length);
+        //        clientNetworkStream.Write(dataLength, 0, 4);
+        //        int bytesSent = 0;
+        //        int bytesLeft = data.Length;
+        //        int length = data.Length;
+
+        //        while (bytesLeft > 0) // send the file
+        //        {
+        //            int currentDataSize = Math.Min(bufferSize, bytesLeft);
+        //            clientNetworkStream.Write(data, bytesSent, currentDataSize);
+        //            bytesSent += currentDataSize;
+        //            bytesLeft -= currentDataSize;
+
+
+        //            double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
+        //            double tmp = percentage * 100;
+        //            int con = (int)tmp;
+        //            Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage);
+        //            Console.WriteLine("this is converted value " + con);
+        //            Progress = con;
+
+
+        //            //ThreadPool.QueueUserWorkItem(test);
+        //        }
+
+        //        Console.WriteLine("file sent");
+        //        clientForFileTransfer.Close();
+        //        clientNetworkStream.Close();
+        //    }
+        //}
+
         private void SendFile()
         {
             ThreadPool.QueueUserWorkItem(SendFileThread);
@@ -106,6 +167,7 @@ namespace Filesender
 
             if ((bool)res)
             {
+                t1.Start();
                 TcpClient tempTcp = new TcpClient();
                 tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 tempTcp.Close();
@@ -130,26 +192,23 @@ namespace Filesender
                 clientNetworkStream.Write(dataLength, 0, 4);
                 int bytesSent = 0;
                 int bytesLeft = data.Length;
-                
+                int length = data.Length;
 
-                
                 while (bytesLeft > 0) // send the file
                 {
                     int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                   
-                    // x = a + (X - A) * (b - a) / (B - A)
-                    double percentage = bytesSent / (double)data.Length; //say filesize is 423 000 and bytesent
-                    Console.WriteLine("this is bytesSent " + bytesSent + " and this is data length" + data.Length);
-                    double p = 0;
-                    p = (percentage * 100);
-                    Progress = (int)p;
-
-                    Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage); 
                     clientNetworkStream.Write(data, bytesSent, currentDataSize);
-                  
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
+                    double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
+                    double tmp = percentage * 100;
+                    int con = (int)tmp;
+                    Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage);
+                    Console.WriteLine("this is converted value " + con);
+                    Progress = con;
+                    //ThreadPool.QueueUserWorkItem(test);
                 }
+
                 Console.WriteLine("file sent");
                 clientForFileTransfer.Close();
                 clientNetworkStream.Close();
