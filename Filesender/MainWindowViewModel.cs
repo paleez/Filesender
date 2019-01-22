@@ -39,7 +39,7 @@ namespace Filesender
         bool listenToConnections = true;
 
         public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(Progress)); } }
-        private int progress;
+        private int progress = 0;
         
 
         public MainWindowViewModel()
@@ -48,7 +48,7 @@ namespace Filesender
             SendFileCommand = new Command(SendFile);
             servers = new List<Server>();
             ThreadPool.QueueUserWorkItem(ServerSetup);
-            progress = 80;
+            
         }
 
         private void ChooseFolder()
@@ -132,7 +132,9 @@ namespace Filesender
                 while (bytesLeft > 0) // send the file
                 {
                     int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                    Console.WriteLine("progressvalue " + progress);
                     clientNetworkStream.Write(data, bytesSent, currentDataSize);
+                    Progress += 10;
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
