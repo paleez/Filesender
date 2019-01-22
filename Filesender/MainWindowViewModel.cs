@@ -23,7 +23,9 @@ namespace Filesender
         public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
         private int localPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
-        private string theirIp = "212.116.64.211";
+        private string theirIp = "127.0.0.1";
+        //"212.116.64.211"
+        // " 127.0.0.1"
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
         private int theirPort = 6096;
         private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
@@ -38,8 +40,8 @@ namespace Filesender
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
 
-        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(progress)); } }
-        private int progress = 0;
+        public int Progress { get { return progress;  }  set { progress = value; OnPropertyChanged(nameof(Progress)); } }
+        private int progress;
         
 
         public MainWindowViewModel()
@@ -47,8 +49,7 @@ namespace Filesender
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
             servers = new List<Server>();
-            ThreadPool.QueueUserWorkItem(ServerSetup);
-            
+            ThreadPool.QueueUserWorkItem(ServerSetup);   
         }
 
         private void ChooseFolder()
@@ -131,20 +132,25 @@ namespace Filesender
                 int bytesLeft = data.Length;
                 
 
-                int pc = 0;
+                
                 while (bytesLeft > 0) // send the file
                 {
                     int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                    Console.WriteLine("progressvalue " + progress);
+                   
                     // x = a + (X - A) * (b - a) / (B - A)
+                    double percentage = bytesSent / (double)data.Length; //say filesize is 423 000 and bytesent
+                    Console.WriteLine("this is bytesSent " + bytesSent + " and this is data length" + data.Length);
+                    double p = 0;
+                    p = (percentage * 100);
+                    Progress = (int)p;
 
-
-                    progress += 1;
+                    Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage); 
                     clientNetworkStream.Write(data, bytesSent, currentDataSize);
                   
                     bytesSent += currentDataSize;
                     bytesLeft -= currentDataSize;
                 }
+                Console.WriteLine("file sent");
                 clientForFileTransfer.Close();
                 clientNetworkStream.Close();
             }

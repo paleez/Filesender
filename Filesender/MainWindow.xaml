@@ -21,10 +21,10 @@
         <TextBox HorizontalAlignment="Right" Height="23" Margin="0,115,252,0" TextWrapping="Wrap" Text="{Binding TheirPort}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,49,294,0" TextWrapping="Wrap" Text="Their computer" VerticalAlignment="Top"/>
         <Button Command="{Binding SendFileCommand}" Content="File to send" HorizontalAlignment="Right" Margin="0,216,297,0" VerticalAlignment="Top" Width="75"/>
-        <ProgressBar Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="10" Margin="0,262,272,0" VerticalAlignment="Top" Width="100"/>
+        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="10" Margin="0,262,272,0" VerticalAlignment="Top" Width="100"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,241,306,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,203,0,0" TextWrapping="Wrap" Text="start server for debug" VerticalAlignment="Top" Width="120" Height="23"/>
-        <ProgressBar HorizontalAlignment="Left" Height="0" Margin="420,262,0,0" VerticalAlignment="Top" Width="46"/>
+        
 
     </Grid>
 </Window>
