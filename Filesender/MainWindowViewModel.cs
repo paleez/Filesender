@@ -167,7 +167,6 @@ namespace Filesender
 
             if ((bool)res)
             {
-                t1.Start();
                 TcpClient tempTcp = new TcpClient();
                 tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
                 tempTcp.Close();
@@ -203,9 +202,8 @@ namespace Filesender
                     double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
                     double tmp = percentage * 100;
                     int con = (int)tmp;
-                    Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage);
-                    Console.WriteLine("this is converted value " + con);
-                    Progress = con;
+                    Application.Current.Dispatcher.Invoke(() => Progress = con);
+                    //Progress = con;
                     //ThreadPool.QueueUserWorkItem(test);
                 }
 
