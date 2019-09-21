@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows;
 
 namespace Filesender
 {
@@ -18,12 +19,12 @@ namespace Filesender
         public ICommand ChooseFolderCommand { get; }
         private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
         public ICommand StartMyServerCommand { get; }
-        public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); } }
+        public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); Console.WriteLine("Serverport is now " + serverPort); } }
         private int serverPort = 6096;
-        public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); } }
-        private string connectionFeedback = "Waiting for connection";
+        public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); Console.WriteLine("connectionFeedback changed to " + connectionFeedback); } }
+        private string connectionFeedback = "Waiting for connection...";
 
-        private bool isConnected = false;
+        
         Socket socket;
         TcpListener listenerServer;
         NetworkStream networkStream;
@@ -33,10 +34,12 @@ namespace Filesender
         public Server(Socket socket, TcpListener listenerServer, string myFolder)
         {
             ChooseFolderCommand = new Command(ChooseFolder);
+            ConnectionFeedback = "Listening for connections";
             this.listenerServer = listenerServer;
             this.socket = socket;
             this.myFolder = myFolder;
             //ThreadPool.QueueUserWorkItem(Listen);
+            
             ReceiveFile(this);
         }
 
@@ -48,6 +51,7 @@ namespace Filesender
             if (socket != null)
             {
                 connectionFeedback = "Connected to server";
+                
                 //ReceiveFile();
             }
         }   //not being used
@@ -57,8 +61,8 @@ namespace Filesender
 
         public void ReceiveFile(object obj)
         {
-            Console.WriteLine("we are in");
-            connectionFeedback = "Connected";
+           
+            
             tcpClient = listenerServer.AcceptTcpClient();
             networkStream = tcpClient.GetStream();
 
@@ -78,6 +82,8 @@ namespace Filesender
             byte[] data = new byte[dataLen];
             int bufferSize = 1024;
             int bytesRead = 0;
+
+            //receive file
             while (bytesLeft > 0)
             {
                 int currentDataSize = Math.Min(bufferSize, bytesLeft);
@@ -90,19 +96,21 @@ namespace Filesender
                 bytesRead += currentDataSize;
                 bytesLeft -= currentDataSize;
             }
-            String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            string uh = "" + filename + ".rar";
+
+            //String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
             File.WriteAllBytes(myFolder + "\\" + filename, data);
 
+            ConnectionFeedback = "File received";
             listenerServer.Stop();
             socket.Close();
             tcpClient.Close();
             networkStream.Close();
-
         }
 
         private void ChooseFolder()
         {
+            
             var dialog = new CommonOpenFileDialog()
             {
                 Title = "Select Folder",

@@ -20,24 +20,25 @@ namespace Filesender
     {
         public ICommand ChooseFolderCommand { get; }
         public ICommand ConnectCommand { get; }
-        public ICommand StartMyServerCommand { get; }
+        public ICommand StartServerCommand { get; }
         public ICommand SendFileCommand { get; }
+
+        private Server currentServer;
 
         public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
         private int localPort = 6096;
         public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
         private string theirIp = "127.0.0.1";
-        //"212.116.64.211"
-        // " 127.0.0.1"
+        
         public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
         private int theirPort = 6096;
         private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
         private string fileToSendPath; //mebe
 
-        public Server ActiveServer { get { return server; } set { server = value; OnPropertyChanged(nameof(ActiveServer)); } }
-        Server server;
-
-        List<Server> servers;
+        public Server ActiveServer { get { return currentServer; } set { currentServer = value; OnPropertyChanged(nameof(ActiveServer)); } }
+        
+        
+        List <Server> servers;
         TcpListener listenerServer;
         Socket socketServer;
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
@@ -46,12 +47,13 @@ namespace Filesender
         public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
         private int progress = 0;
 
-        Thread t1;
+        private bool serverHasBeenStarted = false;
 
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
+            StartServerCommand = new Command(StartServer);
             servers = new List<Server>();
             //t1 = new Thread(RunFile);
             ThreadPool.QueueUserWorkItem(ServerSetup);
@@ -79,6 +81,11 @@ namespace Filesender
             }
         }
 
+        private void StartServer()
+        {
+            //do nothing yet
+        }
+
         private void ServerSetup(object obj)
         {
             while (true)
@@ -88,8 +95,19 @@ namespace Filesender
                 socketServer = listenerServer.AcceptSocket();
                 if (socketServer != null)
                 {
-                    servers.Add(new Server(socketServer, listenerServer, myFolder));
-                    server = servers.ElementAt(0);
+                    currentServer = new Server(socketServer, listenerServer, myFolder);
+
+                    servers.Add(currentServer);
+                    for (int i = 0; i < servers.Count; i++)
+                    {
+                        if (servers.ElementAt(i) == currentServer)
+                        {
+                            Console.WriteLine("Found currentServer");
+                            ActiveServer = servers.ElementAt(i);
+                            //ActiveServer.ConnectionFeedback = "Connected";
+                        }
+                    }
+                    
                     socketServer.Close();
                     listenerServer.Stop();
                     servers.RemoveAt(0);
@@ -203,11 +221,9 @@ namespace Filesender
                     double tmp = percentage * 100;
                     int con = (int)tmp;
                     Application.Current.Dispatcher.Invoke(() => Progress = con);
-                    //Progress = con;
-                    //ThreadPool.QueueUserWorkItem(test);
                 }
 
-                Console.WriteLine("file sent");
+                Console.WriteLine("file sent from client");
                 clientForFileTransfer.Close();
                 clientNetworkStream.Close();
             }
