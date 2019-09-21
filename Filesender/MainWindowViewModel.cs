@@ -25,15 +25,20 @@ namespace Filesender
 
         private Server currentServer;
 
+        public int MyIP { get { return myip; } set { myip = value; OnPropertyChanged(nameof(MyIP)); } }
+        private int myip;
+        //run method - lookup ip on host
+
         public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
         private int localPort = 6096;
-        public string TheirIp { get { return theirIp; } set { theirIp = value; OnPropertyChanged(nameof(TheirIp)); } }
-        private string theirIp = "127.0.0.1";
+        public string RemoteIP { get { return remoteIP; } set { remoteIP = value; OnPropertyChanged(nameof(RemoteIP)); } }
+        private string remoteIP = "127.0.0.1";
         
-        public int TheirPort { get { return theirPort; } set { theirPort = value; OnPropertyChanged(nameof(TheirPort)); } }
-        private int theirPort = 6096;
-        private string myFolder = "C:\\Users\\darks\\Desktop\\Test\\";
-        private string fileToSendPath; //mebe
+        public int RemotePort { get { return remotePort; } set { remotePort = value; OnPropertyChanged(nameof(RemotePort)); } }
+        private int remotePort = 6096;
+
+        private string myFolder;
+        private string fileToSendPath;
 
         public Server ActiveServer { get { return currentServer; } set { currentServer = value; OnPropertyChanged(nameof(ActiveServer)); } }
         
@@ -43,24 +48,36 @@ namespace Filesender
         Socket socketServer;
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         bool listenToConnections = true;
+        bool isPathSet = false;
 
         public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
         private int progress = 0;
 
-        private bool serverHasBeenStarted = false;
+        Thread st;
+
+        
 
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
-            StartServerCommand = new Command(StartServer);
             servers = new List<Server>();
-            //t1 = new Thread(RunFile);
-            ThreadPool.QueueUserWorkItem(ServerSetup);
+           
+            // Start a thread that calls a parameterized instance method.
+           
+            st = new Thread(ServerSetup);
+            st.Start();
+            //ThreadPool.QueueUserWorkItem(ServerSetup);
         }
 
         private void ChooseFolder()
         {
+            Console.WriteLine("ChooseFolder for server");
+            if (ActiveServer != null)
+            {
+                ActiveServer.ProgressReceive = 0;
+            }
+            
             var dialog = new CommonOpenFileDialog()
             {
                 Title = "Select Folder",
@@ -78,103 +95,47 @@ namespace Filesender
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 myFolder = dialog.FileName;
+                isPathSet = true;
             }
-        }
-
-        private void StartServer()
-        {
-            //do nothing yet
         }
 
         private void ServerSetup(object obj)
         {
-            while (true)
+            int counter = 0;
+            while (listenToConnections)
             {
+                
+                Console.WriteLine("Server is listening for connections...");
+                Console.WriteLine("ServerSetup method has been called " + counter + " times");
+                counter++;
                 listenerServer = new TcpListener(IPAddress.Any, LocalPort);
                 listenerServer.Start();
                 socketServer = listenerServer.AcceptSocket();
+                listenToConnections = false;
                 if (socketServer != null)
                 {
-                    currentServer = new Server(socketServer, listenerServer, myFolder);
+                    currentServer = new Server(socketServer, listenerServer, myFolder, isPathSet);
 
                     servers.Add(currentServer);
-                    for (int i = 0; i < servers.Count; i++)
-                    {
-                        if (servers.ElementAt(i) == currentServer)
-                        {
-                            Console.WriteLine("Found currentServer");
-                            ActiveServer = servers.ElementAt(i);
-                            //ActiveServer.ConnectionFeedback = "Connected";
-                        }
-                    }
+                    Console.WriteLine("Server added, listening to port " + currentServer.ServerPort);
                     
+                    ActiveServer = servers.ElementAt(0);
                     socketServer.Close();
                     listenerServer.Stop();
+                    
                     servers.RemoveAt(0);
+                    Console.WriteLine("Socket closed, tcpListener closed, server removed");
+                    listenToConnections = true;
                 }
             }
         }
 
-        //private void RunFile()
-        //{
-        //    if ((bool)res)
-        //    {
-        //        t1.Start();
-        //        TcpClient tempTcp = new TcpClient();
-        //        tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
-        //        tempTcp.Close();
-
-        //        TcpClient clientForFileTransfer = new TcpClient();
-        //        NetworkStream clientNetworkStream;
-        //        clientForFileTransfer.Connect(IPAddress.Parse(TheirIp), TheirPort);
-        //        clientNetworkStream = clientForFileTransfer.GetStream();
-
-        //        //have to send filename 
-        //        fileToSendPath = ofd.FileName;
-        //        string filename = ofd.SafeFileName;
-        //        int bufferSize = 1024;
-        //        byte[] fname = Encoding.UTF8.GetBytes(filename);
-        //        byte[] fLen = BitConverter.GetBytes(fname.Length);
-        //        clientNetworkStream.Write(fLen, 0, 4);
-        //        clientNetworkStream.Write(fname, 0, fname.Length);
-
-        //        //sending the file size
-        //        byte[] data = File.ReadAllBytes(fileToSendPath);
-        //        byte[] dataLength = BitConverter.GetBytes(data.Length);
-        //        clientNetworkStream.Write(dataLength, 0, 4);
-        //        int bytesSent = 0;
-        //        int bytesLeft = data.Length;
-        //        int length = data.Length;
-
-        //        while (bytesLeft > 0) // send the file
-        //        {
-        //            int currentDataSize = Math.Min(bufferSize, bytesLeft);
-        //            clientNetworkStream.Write(data, bytesSent, currentDataSize);
-        //            bytesSent += currentDataSize;
-        //            bytesLeft -= currentDataSize;
-
-
-        //            double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
-        //            double tmp = percentage * 100;
-        //            int con = (int)tmp;
-        //            Console.WriteLine("this is progress " + progress + " and this is percentage " + percentage);
-        //            Console.WriteLine("this is converted value " + con);
-        //            Progress = con;
-
-
-        //            //ThreadPool.QueueUserWorkItem(test);
-        //        }
-
-        //        Console.WriteLine("file sent");
-        //        clientForFileTransfer.Close();
-        //        clientNetworkStream.Close();
-        //    }
-        //}
-
         private void SendFile()
         {
+            Console.WriteLine("Send file to server button");
             ThreadPool.QueueUserWorkItem(SendFileThread);
         }
+
         private void SendFileThread(object obj)
         {
             OpenFileDialog ofd = new OpenFileDialog
@@ -186,12 +147,12 @@ namespace Filesender
             if ((bool)res)
             {
                 TcpClient tempTcp = new TcpClient();
-                tempTcp.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
                 tempTcp.Close();
 
                 TcpClient clientForFileTransfer = new TcpClient();
                 NetworkStream clientNetworkStream;
-                clientForFileTransfer.Connect(IPAddress.Parse(TheirIp), TheirPort);
+                clientForFileTransfer.Connect(IPAddress.Parse(RemoteIP), RemotePort);
                 clientNetworkStream = clientForFileTransfer.GetStream();
 
                 //have to send filename 
