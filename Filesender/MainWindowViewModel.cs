@@ -23,7 +23,7 @@ namespace Filesender
         public ICommand StartServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        private Server currentServer;
+        
 
         public int MyIP { get { return myip; } set { myip = value; OnPropertyChanged(nameof(MyIP)); } }
         private int myip;
@@ -39,11 +39,11 @@ namespace Filesender
 
         private string myFolder;
         private string fileToSendPath;
+        
+        private string receiveFolder;
+        private bool pathSet = true;
 
-        public Server ActiveServer { get { return currentServer; } set { currentServer = value; OnPropertyChanged(nameof(ActiveServer)); } }
-        
-        
-        List <Server> servers;
+           
         TcpListener listenerServer;
         Socket socketServer;
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
@@ -53,9 +53,25 @@ namespace Filesender
         public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
         private int progress = 0;
 
+        
+        
+        NetworkStream networkStream;
+        TcpClient tcpClient;
+
         Thread st;
 
-        
+
+
+
+
+        public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); Console.WriteLine("Serverport is now " + serverPort); } }
+        private int serverPort = 6096;
+        public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); Console.WriteLine("connectionFeedback changed to " + connectionFeedback); } }
+        private string connectionFeedback = "Waiting for connection...";
+        public int ProgressReceive { get { return progressReceive; } set { progressReceive = value; OnPropertyChanged(nameof(ProgressReceive)); } }
+        private int progressReceive = 0;
+
+
 
         public MainWindowViewModel()
         {
@@ -72,10 +88,7 @@ namespace Filesender
         private void ChooseFolder()
         {
             Console.WriteLine("ChooseFolder for server");
-            if (ActiveServer != null)
-            {
-                ActiveServer.ProgressReceive = 0;
-            }
+           
             
             var dialog = new CommonOpenFileDialog()
             {
@@ -113,10 +126,63 @@ namespace Filesender
                 listenToConnections = false;
                 if (socketServer != null)
                 {
-                    currentServer = new Server(socketServer, listenerServer, myFolder, isPathSet);
-                    ActiveServer = currentServer;
+                    tcpClient = listenerServer.AcceptTcpClient();
+                    networkStream = tcpClient.GetStream();
+
+                    //receive the filename size and filename first
+                    byte[] fsb = new byte[4];
+                    int b = networkStream.Read(fsb, 0, 4);
+                    int s = BitConverter.ToInt32(fsb, 0);
+                    byte[] filenameBuf = new byte[s];
+                    networkStream.Read(filenameBuf, 0, s);
+                    string filename = Encoding.UTF8.GetString(filenameBuf);
+
+                    //receive the filesize
+                    byte[] fileSizeBytes = new byte[4];
+                    int bytes = networkStream.Read(fileSizeBytes, 0, 4);
+                    int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
+                    int bytesLeft = dataLen;
+                    byte[] data = new byte[dataLen];
+                    int bufferSize = 1024;
+                    int bytesRead = 0;
+
+                    //receive file
+                    while (bytesLeft > 0)
+                    {
+                        int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                        if (tcpClient.Available < currentDataSize)
+                        {
+                            currentDataSize = tcpClient.Available;
+                        }
+
+                        bytes = networkStream.Read(data, bytesRead, currentDataSize);
+                        bytesRead += currentDataSize;
+                        bytesLeft -= currentDataSize;
+
+                        double percentage = bytesRead / (double)dataLen; //say filesize is 423 000 and bytesent
+                        double tmp = percentage * 100;
+                        int pr = (int)tmp;
+
+                        Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr );
+
+                    }
+                    if (!pathSet)
+                    {
+                        String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                        receiveFolder = myDocumentPath;
+                        pathSet = true;
+                    }
+
+                    Console.WriteLine("receiveFolder set to " + receiveFolder);
+                    File.WriteAllBytes(receiveFolder + "\\" + filename, data);
+
+                   
+                   
+                    
+                    tcpClient.Close();
+                    networkStream.Close();
                     //servers.Add(currentServer);
-                    Console.WriteLine("Server added, listening to port " + currentServer.ServerPort);
+                    Console.WriteLine("Server added, listening to port " + ServerPort);
                     
                     //ActiveServer = servers.ElementAt(0);
                     socketServer.Close();

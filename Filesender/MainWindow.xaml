@@ -8,8 +8,8 @@
         Title="MainWindow" Height="400" Width="800">
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="19,88,0,0" TextWrapping="Wrap" Text="Port" VerticalAlignment="Top" Width="25" Height="21"/>
-        <TextBlock HorizontalAlignment="Left" Margin="49,40,0,0" TextWrapping="Wrap" Text="{Binding ActiveServer.ConnectionFeedback, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120" Height="30"/>
-        <TextBox HorizontalAlignment="Left" Height="23" Margin="49,86,0,0" TextWrapping="Wrap" Text="{Binding ActiveServer.ServerPort, Mode=TwoWay}" VerticalAlignment="Top" Width="120"/>
+        <TextBlock HorizontalAlignment="Left" Margin="49,40,0,0" TextWrapping="Wrap" Text="{Binding ConnectionFeedback, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120" Height="30"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="49,86,0,0" TextWrapping="Wrap" Text="{Binding ServerPort, Mode=TwoWay}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,24,0,0" TextWrapping="Wrap" Text="Receive files" VerticalAlignment="Top"/>
 
         <Button Command="{Binding ChooseFolderCommand}" Content="Choose folder" HorizontalAlignment="Left" Margin="49,121,0,0" VerticalAlignment="Top" Width="120" Height="23"/>
@@ -23,7 +23,7 @@
         <Button Command="{Binding SendFileCommand}" Content="File to send" HorizontalAlignment="Right" Margin="0,216,297,0" VerticalAlignment="Top" Width="75"/>
         <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="10" Margin="0,262,272,0" VerticalAlignment="Top" Width="100"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,241,306,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
-        <ProgressBar Minimum="0" Maximum="100" Value="{Binding ActiveServer.ProgressReceive, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="23" Margin="0,249,623,0" VerticalAlignment="Top" Width="120"/>
+        <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressReceive, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="23" Margin="0,249,623,0" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,228,676,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
 
 
