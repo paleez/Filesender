@@ -23,72 +23,45 @@ namespace Filesender
         public ICommand StartServerCommand { get; }
         public ICommand SendFileCommand { get; }
 
-        
-
-        public int MyIP { get { return myip; } set { myip = value; OnPropertyChanged(nameof(MyIP)); } }
-        private int myip;
-        //run method - lookup ip on host
-
+        public int Local_IP { get { return localIP; } set { localIP = value; OnPropertyChanged(nameof(Local_IP)); } }
         public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
-        private int localPort = 6096;
         public string RemoteIP { get { return remoteIP; } set { remoteIP = value; OnPropertyChanged(nameof(RemoteIP)); } }
-        private string remoteIP = "127.0.0.1";
-        
         public int RemotePort { get { return remotePort; } set { remotePort = value; OnPropertyChanged(nameof(RemotePort)); } }
+        public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
+        public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
+        public int ProgressReceive { get { return progressReceive; } set { progressReceive = value; OnPropertyChanged(nameof(ProgressReceive)); } }
+        public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); Console.WriteLine("connectionFeedback changed to " + connectionFeedback); } }
+        
+        private int progress = 0;
+        private int progressReceive = 0;
+        private int localIP;
+        private int localPort = 6096;
         private int remotePort = 6096;
-
+        private string remoteIP = "127.0.0.1";
+        private string connectionFeedback = "Waiting for connection...";
         private string myFolder;
         private string fileToSendPath;
-        
-        private string receiveFolder;
         private bool pathSet = true;
+        private bool listenToConnections = true;
+        private bool isPathSet = false;
 
-           
         TcpListener listenerServer;
         Socket socketServer;
-        public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
-        bool listenToConnections = true;
-        bool isPathSet = false;
-
-        public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
-        private int progress = 0;
-
-        
-        
         NetworkStream networkStream;
         TcpClient tcpClient;
-
-        Thread st;
-
-
-
-
-
-        public int ServerPort { get { return serverPort; } set { serverPort = value; OnPropertyChanged(nameof(ServerPort)); Console.WriteLine("Serverport is now " + serverPort); } }
-        private int serverPort = 6096;
-        public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); Console.WriteLine("connectionFeedback changed to " + connectionFeedback); } }
-        private string connectionFeedback = "Waiting for connection...";
-        public int ProgressReceive { get { return progressReceive; } set { progressReceive = value; OnPropertyChanged(nameof(ProgressReceive)); } }
-        private int progressReceive = 0;
-
-
+        Thread t1;
 
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
-           
-            // Start a thread that calls a parameterized instance method.
-           
-            st = new Thread(ServerSetup);
-            st.Start();
-            //ThreadPool.QueueUserWorkItem(ServerSetup);
+            t1 = new Thread(ServerSetup);
+            t1.Start();
         }
 
         private void ChooseFolder()
         {
             Console.WriteLine("ChooseFolder for server");
-           
             
             var dialog = new CommonOpenFileDialog()
             {
@@ -108,6 +81,7 @@ namespace Filesender
             {
                 myFolder = dialog.FileName;
                 isPathSet = true;
+                Console.WriteLine("Path is set to " + myFolder);
             }
         }
 
@@ -116,8 +90,7 @@ namespace Filesender
             int counter = 0;
             while (listenToConnections)
             {
-                
-                Console.WriteLine("Server is listening for connections...");
+                ConnectionFeedback = "Listening for connections on port: " + localPort;
                 Console.WriteLine("ServerSetup method has been called " + counter + " times");
                 counter++;
                 listenerServer = new TcpListener(IPAddress.Any, LocalPort);
@@ -128,7 +101,7 @@ namespace Filesender
                 {
                     tcpClient = listenerServer.AcceptTcpClient();
                     networkStream = tcpClient.GetStream();
-
+                    ConnectionFeedback = "Connected";
                     //receive the filename size and filename first
                     byte[] fsb = new byte[4];
                     int b = networkStream.Read(fsb, 0, 4);
@@ -154,43 +127,30 @@ namespace Filesender
                         {
                             currentDataSize = tcpClient.Available;
                         }
-
                         bytes = networkStream.Read(data, bytesRead, currentDataSize);
                         bytesRead += currentDataSize;
                         bytesLeft -= currentDataSize;
-
-                        double percentage = bytesRead / (double)dataLen; //say filesize is 423 000 and bytesent
+                        double percentage = bytesRead / (double)dataLen;
                         double tmp = percentage * 100;
                         int pr = (int)tmp;
-
                         Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr );
-
                     }
+                    ConnectionFeedback = "File received";
                     if (!pathSet)
                     {
-                        String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                        receiveFolder = myDocumentPath;
+                        String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);                       
+                        myFolder = myDocumentPath;
                         pathSet = true;
                     }
 
-                    Console.WriteLine("receiveFolder set to " + receiveFolder);
-                    File.WriteAllBytes(receiveFolder + "\\" + filename, data);
-
-                   
-                   
-                    
+                    Console.WriteLine("receiveFolder set to " + myFolder);
+                    File.WriteAllBytes(myFolder + "\\" + filename, data);
                     tcpClient.Close();
                     networkStream.Close();
-                    //servers.Add(currentServer);
-                    Console.WriteLine("Server added, listening to port " + ServerPort);
-                    
-                    //ActiveServer = servers.ElementAt(0);
                     socketServer.Close();
                     listenerServer.Stop();
-                    
-                    //servers.RemoveAt(0);
-                    Console.WriteLine("Socket closed, tcpListener closed, server removed");
                     listenToConnections = true;
+                    Console.WriteLine("Socket closed, tcpListener closed, listening for new connections");
                 }
             }
         }
