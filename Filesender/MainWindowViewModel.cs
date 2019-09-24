@@ -61,7 +61,6 @@ namespace Filesender
         {
             ChooseFolderCommand = new Command(ChooseFolder);
             SendFileCommand = new Command(SendFile);
-            servers = new List<Server>();
            
             // Start a thread that calls a parameterized instance method.
            
@@ -115,15 +114,15 @@ namespace Filesender
                 if (socketServer != null)
                 {
                     currentServer = new Server(socketServer, listenerServer, myFolder, isPathSet);
-
-                    servers.Add(currentServer);
+                    ActiveServer = currentServer;
+                    //servers.Add(currentServer);
                     Console.WriteLine("Server added, listening to port " + currentServer.ServerPort);
                     
-                    ActiveServer = servers.ElementAt(0);
+                    //ActiveServer = servers.ElementAt(0);
                     socketServer.Close();
                     listenerServer.Stop();
                     
-                    servers.RemoveAt(0);
+                    //servers.RemoveAt(0);
                     Console.WriteLine("Socket closed, tcpListener closed, server removed");
                     listenToConnections = true;
                 }

@@ -82,7 +82,8 @@ namespace Filesender
                 double tmp = percentage * 100;
                 int pr = (int)tmp;
 
-                Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr); //not working as it should
+                //Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr, System.Windows.Threading.DispatcherPriority.ContextIdle); //not working as it should
+
             }
             if (!pathSet)
             {
@@ -93,7 +94,7 @@ namespace Filesender
             
             Console.WriteLine("receiveFolder set to " + receiveFolder);
             File.WriteAllBytes(receiveFolder + "\\"  + filename, data);
-
+            
             ConnectionFeedback = "File received";
             listener.Stop();
             serverSocket.Close();
