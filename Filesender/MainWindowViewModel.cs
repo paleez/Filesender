@@ -25,13 +25,13 @@ namespace Filesender
 
         public int Local_IP { get { return localIP; } set { localIP = value; OnPropertyChanged(nameof(Local_IP)); } }
         public int LocalPort { get { return localPort; } set { localPort = value; OnPropertyChanged(nameof(LocalPort)); } }
-        public string RemoteIP { get { return remoteIP; } set { remoteIP = value; OnPropertyChanged(nameof(RemoteIP)); } }
-        public int RemotePort { get { return remotePort; } set { remotePort = value; OnPropertyChanged(nameof(RemotePort)); } }
+        public string RemoteIP { get { return remoteIP; } set { remoteIP = value; OnPropertyChanged(nameof(RemoteIP)); Console.WriteLine("RemoteIP changed"); } }
+        public int RemotePort { get { return remotePort; } set { remotePort = value; OnPropertyChanged(nameof(RemotePort)); Console.WriteLine("RemotePort changed"); } }
         public bool ListenToConnections { get { return listenToConnections; } set { listenToConnections = value; OnPropertyChanged(nameof(ListenToConnections)); } }
         public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
         public int ProgressReceive { get { return progressReceive; } set { progressReceive = value; OnPropertyChanged(nameof(ProgressReceive)); } }
         public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); Console.WriteLine("connectionFeedback changed to " + connectionFeedback); } }
-        
+        public string ReceivedFilesPath { get { return "Receiving files in\n" + myFolder; } set { myFolder = value; OnPropertyChanged(nameof(ReceivedFilesPath)); Console.WriteLine("received pathdir changed to " + myFolder); } }
         private int progress = 0;
         private int progressReceive = 0;
         private int localIP;
@@ -41,9 +41,8 @@ namespace Filesender
         private string connectionFeedback = "Waiting for connection...";
         private string myFolder;
         private string fileToSendPath;
-        private bool pathSet = true;
+        private bool pathSet = false;
         private bool listenToConnections = true;
-        private bool isPathSet = false;
 
         TcpListener listenerServer;
         Socket socketServer;
@@ -80,7 +79,8 @@ namespace Filesender
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 myFolder = dialog.FileName;
-                isPathSet = true;
+                ReceivedFilesPath = myFolder;
+                pathSet = true;
                 Console.WriteLine("Path is set to " + myFolder);
             }
         }
@@ -136,10 +136,13 @@ namespace Filesender
                         Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr );
                     }
                     ConnectionFeedback = "File received";
+                    Console.WriteLine("pathset is " + pathSet);
+
                     if (!pathSet)
                     {
                         String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);                       
                         myFolder = myDocumentPath;
+                        ReceivedFilesPath = myFolder;
                         pathSet = true;
                     }
 
