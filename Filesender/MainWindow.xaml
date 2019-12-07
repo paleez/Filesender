@@ -10,8 +10,11 @@
         <TextBlock HorizontalAlignment="Left" Margin="19,117,0,0" TextWrapping="Wrap" Text="Port" VerticalAlignment="Top" Width="25" Height="21"/>
         <TextBlock HorizontalAlignment="Left" Margin="49,40,0,0" TextWrapping="Wrap" Text="{Binding ConnectionFeedback, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120" Height="62"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="49,115,0,0" TextWrapping="Wrap" Text="{Binding LocalPort, Mode=TwoWay}" VerticalAlignment="Top" Width="120"/>
-
         <Button Command="{Binding ChooseFolderCommand}" Content="Choose folder" HorizontalAlignment="Left" Margin="49,148,0,0" VerticalAlignment="Top" Width="120" Height="23"/>
+        <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressReceive, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="22" Margin="0,262,623,0" VerticalAlignment="Top" Width="120"/>
+        <TextBlock HorizontalAlignment="Right" Margin="0,241,697,0" TextWrapping="Wrap" Text="Progress" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Left" Margin="49,184,0,0" TextWrapping="Wrap" Text="{Binding ReceivedFilesPath, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Height="52" Width="119"/>
+
         <TextBox HorizontalAlignment="Right" Height="23" Margin="0,82,252,0" TextWrapping="Wrap" Text="{Binding RemoteIP, Mode=TwoWay}" VerticalAlignment="Top" Width="120"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,86,388,0" TextWrapping="Wrap" Text="IP" VerticalAlignment="Top"/>
         <TextBlock HorizontalAlignment="Right" Margin="0,117,377,0" TextWrapping="Wrap" Text="Port" VerticalAlignment="Top" Width="25" Height="21"/>
@@ -19,10 +22,11 @@
         <TextBlock HorizontalAlignment="Right" Margin="0,49,294,0" TextWrapping="Wrap" Text="Send files" VerticalAlignment="Top"/>
         <Button Command="{Binding SendFileCommand}" Content="Send file" HorizontalAlignment="Right" Margin="0,216,297,0" VerticalAlignment="Top" Width="75"/>
         <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="22" Margin="0,262,252,0" VerticalAlignment="Top" Width="120"/>
-        <TextBlock HorizontalAlignment="Right" Margin="0,241,306,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
-        <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressReceive, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Height="22" Margin="0,262,623,0" VerticalAlignment="Top" Width="120"/>
-        <TextBlock HorizontalAlignment="Right" Margin="0,241,678,0" TextWrapping="Wrap" Text="Progress bar" VerticalAlignment="Top"/>
-        <TextBlock HorizontalAlignment="Left" Margin="49,184,0,0" TextWrapping="Wrap" Text="{Binding ReceivedFilesPath, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Height="52" Width="119"/>
+        <TextBlock HorizontalAlignment="Right" Margin="0,241,326,0" TextWrapping="Wrap" Text="Progress" VerticalAlignment="Top"/>
+        <TextBlock HorizontalAlignment="Right" Margin="0,301,679,0" TextWrapping="Wrap" Text="{Binding ConnectedClients, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top"/>
+
+
+
 
 
 
