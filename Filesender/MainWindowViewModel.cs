@@ -179,6 +179,7 @@ namespace Filesender
 
             if ((bool)res)
             {
+                // this has to be done inside of for loop
                 TcpClient tempTcp = new TcpClient();
                 tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
                 tempTcp.Close();
@@ -187,8 +188,9 @@ namespace Filesender
                 NetworkStream clientNetworkStream;
                 clientForFileTransfer.Connect(IPAddress.Parse(RemoteIP), RemotePort);
                 clientNetworkStream = clientForFileTransfer.GetStream();
+                //
 
-                //have to send filename 
+                //have to send filename // this also has to be done inside for loop if fileSize > onegb
                 fileToSendPath = ofd.FileName;
                 string filename = ofd.SafeFileName;
                 int bufferSize = 1024;
@@ -199,104 +201,87 @@ namespace Filesender
 
                 //if the size is larger than 1GB, split it in 4 chunks
                 int onegb = 1000000000;
-                int nrOfFiles = 4;
-                int readPos = 0;
                 long fileSize = new FileInfo(fileToSendPath).Length;
+                MemoryStream ms = new MemoryStream();
+
                 Console.WriteLine("Filelength: " + fileSize);
                 if (fileSize > onegb)
                 {
-                    try
+                    string inputFile = fileToSendPath;
+                    FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
+                    int numberOfFiles = 4;
+                    int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
+
+                    for (int i = 0; i < numberOfFiles; i++)
                     {
-                        FileStream fs = new FileStream(fileToSendPath, FileMode.Open, FileAccess.Read);
-                        int SizeofEachFile = (int)Math.Ceiling((double)fs.Length / nrOfFiles);
+                        // must sent filename, filesize and then file
+                        string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
+                        string extension = Path.GetExtension(inputFile);
+                        FileStream outputFile = new FileStream(Path.GetDirectoryName(inputFile) + "\\" + baseFileName + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) + extension + ".tmp", FileMode.Create, FileAccess.Write);
+                        int bytesRead = 0;
+                        byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat
 
-                        for (int i = 0; i < nrOfFiles; i++)
+                        if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0)
                         {
-                            string baseFileName = Path.GetFileNameWithoutExtension(fileToSendPath);
-                            string Extension = Path.GetExtension(fileToSendPath);
-
-                            FileStream outputFile = new FileStream(Path.GetDirectoryName(fileToSendPath) + "\\" + baseFileName + "." +
-                                i.ToString().PadLeft(5, Convert.ToChar("0")) + Extension + ".tmp", FileMode.Create, FileAccess.Write);
-
-                            string mergeFolder;
-                            mergeFolder = Path.GetDirectoryName(myFolder);
-
-                            int bytesRead = 0;
-                            byte[] buffer = new byte[SizeofEachFile];
-
-                            if ((bytesRead = fs.Read(buffer, 0, SizeofEachFile)) > 0)
-                            {
-                                outputFile.Write(buffer, 0, bytesRead);
-                                //outp.Write(buffer, 0, BytesRead);
-
-                                string packet = baseFileName + "." + i.ToString().PadLeft(3, Convert.ToChar("0")) + Extension.ToString();
-                                //Packets.Add(packet);
-                            }
-
-                            outputFile.Close();
+                            outputFile.Write(buffer, 0, bytesRead);
 
                         }
-                        fs.Close();
-                    }
-                    catch (Exception Ex)
-                    {
-                        throw new ArgumentException(Ex.Message);
-                    }
+                        outputFile.Close();
 
-                    //byte[] data = SplitFile(fileToSendPath, nrOfFiles);
+                        outputFile.CopyTo(ms);
+                        byte[] data = ms.ToArray();
+                        byte[] dataLength = BitConverter.GetBytes(data.Length);
+                        clientNetworkStream.Write(dataLength, 0, 4);
+
+                        int bytesSent = 0;
+                        int bytesLeft = data.Length;
+                        int length = data.Length;
+                        while (bytesLeft > 0) // send the file
+                        {
+                            int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                            clientNetworkStream.Write(data, bytesSent, currentDataSize);
+                            bytesSent += currentDataSize;
+                            bytesLeft -= currentDataSize;
+                            double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
+                            double tmp = percentage * 100;
+                            int con = (int)tmp;
+                            Application.Current.Dispatcher.Invoke(() => Progress = con);
+                        }
+
+                        Console.WriteLine("file sent from client");
+                        clientForFileTransfer.Close();
+                        clientNetworkStream.Close();
+                    }
+                    fs.Close();
                 }
                 else
                 {
+                    //sending the file size
+                    byte[] data = File.ReadAllBytes(fileToSendPath);
+                    byte[] dataLength = BitConverter.GetBytes(data.Length);
+                    Console.WriteLine("Bitconverter.GetBytes(data.Length): " + dataLength.Length);
+                    clientNetworkStream.Write(dataLength, 0, 4);
+                    int bytesSent = 0;
+                    int bytesLeft = data.Length;
+                    int length = data.Length;
 
+                    while (bytesLeft > 0) // send the file
+                    {
+                        int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                        clientNetworkStream.Write(data, bytesSent, currentDataSize);
+                        bytesSent += currentDataSize;
+                        bytesLeft -= currentDataSize;
+                        double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
+                        double tmp = percentage * 100;
+                        int con = (int)tmp;
+                        Application.Current.Dispatcher.Invoke(() => Progress = con);
+                    }
+
+                    Console.WriteLine("file sent from client");
+                    clientForFileTransfer.Close();
+                    clientNetworkStream.Close();
                 }
-
-                //sending the file size
-                byte[] data = File.ReadAllBytes(fileToSendPath);
-                byte[] dataLength = BitConverter.GetBytes(data.Length);
-                clientNetworkStream.Write(dataLength, 0, 4);
-                int bytesSent = 0;
-                int bytesLeft = data.Length;
-                int length = data.Length;
-
-                while (bytesLeft > 0) // send the file
-                {
-                    int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                    clientNetworkStream.Write(data, bytesSent, currentDataSize);
-                    bytesSent += currentDataSize;
-                    bytesLeft -= currentDataSize;
-                    double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
-                    double tmp = percentage * 100;
-                    int con = (int)tmp;
-                    Application.Current.Dispatcher.Invoke(() => Progress = con);
-                }
-
-                Console.WriteLine("file sent from client");
-                clientForFileTransfer.Close();
-                clientNetworkStream.Close();
             }
         }
-
-        private void SendPartOfFile()
-        {
-
-            //// Read the source file into a byte array.
-            //long fLength = fsSource.Length / 20 + 1;
-            //byte[] bytes = new byte[fLength];
-            //int numBytesToRead = (int)fLength;
-            //int numBytesRead = 0;
-            //while (numBytesToRead > 0)
-            //{
-            //    fsSource.Position = readPosition;
-            //    readPosition += fLength;
-            //    int n = fsSource.Read(bytes, numBytesRead, numBytesToRead);
-
-            //    // Break when the end of the file is reached.
-            //    if (n == 0) break;
-
-            //    numBytesRead += n;
-            //    numBytesToRead -= n;
-            //}
-        }
-
     }
 }
