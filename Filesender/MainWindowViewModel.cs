@@ -40,11 +40,6 @@ namespace Filesender
         private string fileToSendPath;
         private bool pathSet = false;
         private bool listenToConnections = true;
-
-        TcpListener listenerServer;
-        Socket socketServer;
-        NetworkStream networkStream;
-        TcpClient tcpClient;
         Thread clientInitThread;
 
         public string ConnectedClients { get { return connectedClients; } set { connectedClients = value; OnPropertyChanged(nameof(ConnectedClients)); } }
@@ -83,74 +78,12 @@ namespace Filesender
             }
         }
 
-        private void HandleConnection(object obj)
-        {
-            ccCounter++;
-            ConnectedClients = "Connected clients: " + ccCounter;
-            tcpClient = listenerServer.AcceptTcpClient();
-            networkStream = tcpClient.GetStream();
-            ConnectionFeedback = "Connected";
-            //receive the filename size and filename first
-            byte[] fsb = new byte[4];
-            int b = networkStream.Read(fsb, 0, 4);
-            int s = BitConverter.ToInt32(fsb, 0);
-            byte[] filenameBuf = new byte[s];
-            networkStream.Read(filenameBuf, 0, s);
-            string filename = Encoding.UTF8.GetString(filenameBuf);
-            Console.WriteLine("Filename: " + filename + "Filesize: " + b + "File Buffer Size: " + s);
-            //receive the filesize
-            byte[] fileSizeBytes = new byte[4];
-            int bytes = networkStream.Read(fileSizeBytes, 0, 4);
-            int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
-            int bytesLeft = dataLen;
-            byte[] data = new byte[dataLen];
-            int bufferSize = 1024;
-            int bytesRead = 0;
-            Console.WriteLine("This is file size received: " + dataLen);
-            //receive file
-            while (bytesLeft > 0)
-            {
-                int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                if (tcpClient.Available < currentDataSize)
-                {
-                    currentDataSize = tcpClient.Available;
-                }
-                bytes = networkStream.Read(data, bytesRead, currentDataSize);
-                bytesRead += currentDataSize;
-                bytesLeft -= currentDataSize;
-                double percentage = bytesRead / (double)dataLen;
-                double tmp = percentage * 100;
-                int pr = (int)tmp;
-                Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr);
-            }
-            ConnectionFeedback = "File received";
-            Console.WriteLine("pathset is " + pathSet);
-
-            if (!pathSet)
-            {
-                String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                myFolder = myDocumentPath;
-                ReceivedFilesPath = myFolder;
-                pathSet = true;
-            }
-
-            Console.WriteLine("receiveFolder set to " + myFolder);
-            File.WriteAllBytes(Path.Combine(myFolder, ToSafeFileName(filename)), data);
-            //File.WriteAllBytes(myFolder + "\\" + filename, data);
-            tcpClient.Close();
-            networkStream.Close();
-            socketServer.Close();
-            listenerServer.Stop();
-            listenToConnections = true;
-            ccCounter--;
-            ConnectedClients = "Connected clients: " + ccCounter;
-            Console.WriteLine("Socket closed, tcpListener closed, listening for new connections");
-        }
+       
 
         private void ServerSetup(object obj)
         {
             int counter = 0;
-            listenerServer = new TcpListener(IPAddress.Any, LocalPort);
+            TcpListener listenerServer = new TcpListener(IPAddress.Any, LocalPort);
             listenerServer.Start();
             while (listenToConnections)
             {
@@ -158,14 +91,74 @@ namespace Filesender
                 Console.WriteLine("ServerSetup method has been called " + counter + " times");
                 counter++;
 
-                
-                socketServer = listenerServer.AcceptSocket();
+                listenerServer.Start();
+                Socket socketServer = listenerServer.AcceptSocket();
                 listenToConnections = false;
                 if (socketServer != null)
                 {
-                    ThreadPool.QueueUserWorkItem(HandleConnection);
+                    ccCounter++;
+                    ConnectedClients = "Connected clients: " + ccCounter;
+                    TcpClient tcpClient = listenerServer.AcceptTcpClient();
+                    NetworkStream networkStream = tcpClient.GetStream();
+                    ConnectionFeedback = "Connected";
+                    //receive the filename size and filename first
+                    byte[] fsb = new byte[4];
+                    int b = networkStream.Read(fsb, 0, 4);
+                    int s = BitConverter.ToInt32(fsb, 0);
+                    byte[] filenameBuf = new byte[s];
+                    networkStream.Read(filenameBuf, 0, s);
+                    string filename = Encoding.UTF8.GetString(filenameBuf);
+                    Console.WriteLine("Filename: " + filename + "Filesize: " + b + "File Buffer Size: " + s);
+                    //receive the filesize
+                    byte[] fileSizeBytes = new byte[4];
+                    int bytes = networkStream.Read(fileSizeBytes, 0, 4);
+                    int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
+                    int bytesLeft = dataLen;
+                    byte[] data = new byte[dataLen];
+                    int bufferSize = 1024;
+                    int bytesRead = 0;
+                    Console.WriteLine("This is file size received: " + dataLen);
+                    //receive file
+                    while (bytesLeft > 0)
+                    {
+                        int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                        if (tcpClient.Available < currentDataSize)
+                        {
+                            currentDataSize = tcpClient.Available;
+                        }
+                        bytes = networkStream.Read(data, bytesRead, currentDataSize);
+                        bytesRead += currentDataSize;
+                        bytesLeft -= currentDataSize;
+                        double percentage = bytesRead / (double)dataLen;
+                        double tmp = percentage * 100;
+                        int pr = (int)tmp;
+                        Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr);
+                    }
+                    ConnectionFeedback = "File received";
+                    Console.WriteLine("pathset is " + pathSet);
+
+                    if (!pathSet)
+                    {
+                        String myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                        myFolder = myDocumentPath;
+                        ReceivedFilesPath = myFolder;
+                        pathSet = true;
+                    }
+
+                    Console.WriteLine("receiveFolder set to " + myFolder);
+                    File.WriteAllBytes(Path.Combine(myFolder, ToSafeFileName(filename)), data);
+                    //File.WriteAllBytes(myFolder + "\\" + filename, data);
+                    tcpClient.Close();
+                    networkStream.Close();
+                    socketServer.Close();
+                    //listenerServer.Stop();
+                    listenToConnections = true;
+                    ccCounter--;
+                    ConnectedClients = "Connected clients: " + ccCounter;
+                    Console.WriteLine("Socket closed, tcpListener closed, listening for new connections");
                 }
             }
+            listenerServer.Stop();
         }
 
         public string ToSafeFileName(string s)
@@ -294,9 +287,9 @@ namespace Filesender
 
         private void SendFileMeth(string filePath)
         {
-            //TcpClient tempTcp = new TcpClient();
-            //tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-            //tempTcp.Close();
+            TcpClient tempTcp = new TcpClient();
+            tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
+            tempTcp.Close();
 
             TcpClient clientForFileTransfer = new TcpClient();
             NetworkStream clientNetworkStream;
