@@ -77,20 +77,14 @@ namespace Filesender
                 Console.WriteLine("Path is set to " + myFolder);
             }
         }
-
-       
-
+        
         private void ServerSetup(object obj)
         {
-            int counter = 0;
             TcpListener listenerServer = new TcpListener(IPAddress.Any, LocalPort);
             listenerServer.Start();
             while (listenToConnections)
             {
                 ConnectionFeedback = "Listening for connections on port: " + localPort;
-                Console.WriteLine("ServerSetup method has been called " + counter + " times");
-                counter++;
-
                 listenerServer.Start();
                 Socket socketServer = listenerServer.AcceptSocket();
                 listenToConnections = false;
@@ -108,7 +102,6 @@ namespace Filesender
                     byte[] filenameBuf = new byte[s];
                     networkStream.Read(filenameBuf, 0, s);
                     string filename = Encoding.UTF8.GetString(filenameBuf);
-                    Console.WriteLine("Filename: " + filename + "Filesize: " + b + "File Buffer Size: " + s);
                     //receive the filesize
                     byte[] fileSizeBytes = new byte[4];
                     int bytes = networkStream.Read(fileSizeBytes, 0, 4);
@@ -117,7 +110,6 @@ namespace Filesender
                     byte[] data = new byte[dataLen];
                     int bufferSize = 1024;
                     int bytesRead = 0;
-                    Console.WriteLine("This is file size received: " + dataLen);
                     //receive file
                     while (bytesLeft > 0)
                     {
@@ -135,7 +127,6 @@ namespace Filesender
                         Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr);
                     }
                     ConnectionFeedback = "File received";
-                    Console.WriteLine("pathset is " + pathSet);
 
                     if (!pathSet)
                     {
@@ -144,44 +135,23 @@ namespace Filesender
                         ReceivedFilesPath = myFolder;
                         pathSet = true;
                     }
-
-                    Console.WriteLine("receiveFolder set to " + myFolder);
-                    File.WriteAllBytes(Path.Combine(myFolder, ToSafeFileName(filename)), data);
-                    //File.WriteAllBytes(myFolder + "\\" + filename, data);
+                    File.WriteAllBytes(Path.Combine(myFolder, Path.GetFileName(filename)), data);
                     tcpClient.Close();
                     networkStream.Close();
                     socketServer.Close();
-                    //listenerServer.Stop();
                     listenToConnections = true;
                     ccCounter--;
                     ConnectedClients = "Connected clients: " + ccCounter;
-                    Console.WriteLine("Socket closed, tcpListener closed, listening for new connections");
                 }
             }
             listenerServer.Stop();
         }
-
-        public string ToSafeFileName(string s)
-        {
-            return s
-                .Replace("\\", "")
-                .Replace("/", "")
-                .Replace("\"", "")
-                .Replace("*", "")
-                .Replace(":", "")
-                .Replace("?", "")
-                .Replace("<", "")
-                .Replace(">", "")
-                .Replace("|", "");
-        }
         private void SendFile()
         {
-            Console.WriteLine("Send file to server button");
-            clientInitThread = new Thread(SendFileThreadAsync);
+            clientInitThread = new Thread(SendFileThreadAsync2);
             clientInitThread.Start();
         }
-
-        private void SendFileThreadAsync()
+        private void SendFileThreadAsync2()
         {
             OpenFileDialog ofd = new OpenFileDialog
             {
@@ -192,12 +162,8 @@ namespace Filesender
             if ((bool)res)
             {
                 fileToSendPath = ofd.FileName;
-                //if the size is larger than 1GB, split it in 4 chunks
                 int onegb = 1000000000;
                 long fileSize = new FileInfo(fileToSendPath).Length;
-                Console.WriteLine("File size: " + fileSize);
-
-                //this is the point to decide
                 if (fileSize > onegb)
                 {
                     string inputFile = fileToSendPath;
@@ -207,7 +173,6 @@ namespace Filesender
                     int numberOfFiles = 10;
                     int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
 
-                    //split files into chunks of 10
                     for (int i = 0; i < 10; i++)
                     {
                         string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
@@ -218,32 +183,15 @@ namespace Filesender
                         Console.WriteLine("This is i: " + i);
                         if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
                         outputFile.Close();
+                        SendFileMeth(outputFile.Name);
+                        File.Delete(outputFile.Name);
                     }
-                    fs.Close();
-
-                    //send files
-                    string outPath = "C:\\Users\\paleez\\Desktop";
-                    string[] tempFiles = Directory.GetFiles(outPath, "*.tmp");
-                    for (int i = 0; i < tempFiles.Length; i++)
-                    {
-                        Console.WriteLine("tempfileAddres" + tempFiles[i]);
-                    }
-
-                    for (int i = 0; i < tempFiles.Length; i++)
-                    {
-                        SendFileMeth(tempFiles[i]);
-                    }
-                    //string fileName = Path.GetFileNameWithoutExtension(tempFiles[i]);
-                    //string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
-                    //string extension = Path.GetExtension(fileName);
-
-                    Console.WriteLine("file sent from client");
                 }
                 else
                 {
-                    //TcpClient tempTcp = new TcpClient();
-                    //tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-                    //tempTcp.Close();
+                    TcpClient tempTcp = new TcpClient();
+                    tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
+                    tempTcp.Close();
 
                     TcpClient clientForFileTransfer = new TcpClient();
                     NetworkStream clientNetworkStream;
@@ -277,8 +225,6 @@ namespace Filesender
                         int con = (int)tmp;
                         Application.Current.Dispatcher.Invoke(() => Progress = con);
                     }
-
-                    Console.WriteLine("file sent from client");
                     clientForFileTransfer.Close();
                     clientNetworkStream.Close();
                 }
@@ -310,7 +256,6 @@ namespace Filesender
             int bytesSent = 0;
             int bytesLeft = data.Length;
             int length = data.Length;
-            Console.WriteLine("datalength: " + data.Length);
 
             //send files
             while (bytesLeft > 0) // send the file
@@ -324,10 +269,46 @@ namespace Filesender
                 int con = (int)tmp;
                 Application.Current.Dispatcher.Invoke(() => Progress = con);
             }
-
-            Console.WriteLine("file sent from client");
             clientForFileTransfer.Close();
             clientNetworkStream.Close();
+        }
+
+        private void MergeFiles()
+        {
+            //string outPath = 
+            //string[] tmpFiles = Directory.GetFiles(outPath, "*.tmp");
+            //FileStream outputFile = null;
+            //string prevFileName = "";
+
+            //foreach (string tempFile in tmpFiles)
+            //{
+
+            //    string fileName = Path.GetFileNameWithoutExtension(tempFile);
+            //    string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
+            //    string extension = Path.GetExtension(fileName);
+
+            //    if (!prevFileName.Equals(baseFileName))
+            //    {
+            //        if (outputFile != null)
+            //        {
+            //            outputFile.Flush();
+            //            outputFile.Close();
+            //        }
+            //        outputFile = new FileStream(outPath + baseFileName + extension, FileMode.OpenOrCreate, FileAccess.Write);
+            //    }
+
+            //    int bytesRead = 0;
+            //    byte[] buffer = new byte[1024];
+            //    FileStream inputTempFile = new FileStream(tempFile, FileMode.OpenOrCreate, FileAccess.Read);
+
+            //    while ((bytesRead = inputTempFile.Read(buffer, 0, 1024)) > 0)
+            //        outputFile.Write(buffer, 0, bytesRead);
+
+            //    inputTempFile.Close();
+            //    File.Delete(tempFile);
+            //    prevFileName = baseFileName;
+            //}
+            //outputFile.Close();
         }
     }
 }
