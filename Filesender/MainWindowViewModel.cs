@@ -114,7 +114,6 @@ namespace Filesender
                     string filename = Encoding.UTF8.GetString(filenameBuf);
 
                     //receive the filesize
-                    //TODO: check filesize
                     byte[] fileSizeBytes = new byte[4];
                     int bytes = networkStream.Read(fileSizeBytes, 0, 4);
                     int dataLen = BitConverter.ToInt32(fileSizeBytes, 0);
@@ -122,7 +121,7 @@ namespace Filesender
                     byte[] data = new byte[dataLen];
                     int bufferSize = 1024;
                     int bytesRead = 0;
-
+                    Console.WriteLine("This is file size received: " + dataLen);
                     //receive file
                     while (bytesLeft > 0)
                     {
@@ -138,7 +137,6 @@ namespace Filesender
                         double tmp = percentage * 100;
                         int pr = (int)tmp;
                         Application.Current.Dispatcher.Invoke(() => ProgressReceive = pr);
-
                     }
                     ConnectionFeedback = "File received";
                     Console.WriteLine("pathset is " + pathSet);
@@ -163,6 +161,7 @@ namespace Filesender
                     ConnectedClients = "Connected clients: " + ccCounter;
                     Console.WriteLine("Socket closed, tcpListener closed, listening for new connections");
                 }
+                
             }
         }
         public string ToSafeFileName(string s)
@@ -211,12 +210,12 @@ namespace Filesender
                     FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
                     FileStream outputFile;
                     MemoryStream ms = new MemoryStream();
-                    int numberOfFiles = 4;
+                    int numberOfFiles = 10;
                     int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
                     Console.WriteLine("nrFiles: " + numberOfFiles);
 
-                    //split files into chunks
-                    for (int i = 0; i < 4; i++)
+                    //split files into chunks of 10
+                    for (int i = 0; i < 10; i++)
                     {
                         string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
                         string extension = Path.GetExtension(inputFile);
@@ -224,25 +223,25 @@ namespace Filesender
                         int bytesRead = 0;
                         byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat
                         Console.WriteLine("This is i: " + i);
-                        while ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
+                        if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
                         outputFile.Close();
                     }
                     fs.Close();
 
                     //send files
-                    string outPath = fileToSendPath;
-                    string[] tempFiles = Directory.GetFiles(fileToSendPath, "*.tmp");
+                    string outPath = "C:\\Users\\paleez\\Desktop";
+                    string[] tempFiles = Directory.GetFiles(outPath, "*.tmp");
                     outputFile = null;
-
-
-                   
-
                     for (int i = 0; i < tempFiles.Length; i++)
                     {
-                        string fileName = Path.GetFileNameWithoutExtension(tempFiles[i]);
-                        string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
-                        string extension = Path.GetExtension(fileName);
-                        SendFileMeth(fileName + baseFileName + extension);
+                        Console.WriteLine("tempfileAddres" + tempFiles[i]);
+                    }
+                    for (int i = 0; i < tempFiles.Length; i++)
+                    {
+                        //string fileName = Path.GetFileNameWithoutExtension(tempFiles[i]);
+                        //string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
+                        //string extension = Path.GetExtension(fileName);
+                        SendFileMeth(tempFiles[i]);
                         ////send filename             
                         //int bufferSize = 1024;
                         //byte[] fname = Encoding.UTF8.GetBytes(outputFile.Name);
@@ -269,7 +268,6 @@ namespace Filesender
                         //File.Delete(outputFile.Name);
                         //clientForFileTransfer.Close();
                         //clientNetworkStream.Close();
-
                     }
 
                     Console.WriteLine("file sent from client");
@@ -342,13 +340,13 @@ namespace Filesender
             clientNetworkStream.Write(fname, 0, fname.Length);
 
             //send the filesize
-            byte[] data = File.ReadAllBytes(fileToSendPath);
+            byte[] data = File.ReadAllBytes(filePath);
             byte[] dataLength = BitConverter.GetBytes(data.Length);
             clientNetworkStream.Write(dataLength, 0, 4);
             int bytesSent = 0;
             int bytesLeft = data.Length;
             int length = data.Length;
-
+            Console.WriteLine("datalength: " + data.Length);
             //send files
             while (bytesLeft > 0) // send the file
             {
