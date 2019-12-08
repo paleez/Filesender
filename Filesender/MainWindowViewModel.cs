@@ -39,6 +39,7 @@ namespace Filesender
         private string fileToSendPath;
         private bool pathSet = false;
         private bool listenToConnections = true;
+        private bool multipleFile = false;
 
         TcpListener listenerServer;
         Socket socketServer;
@@ -87,7 +88,7 @@ namespace Filesender
         private void ServerSetup()
         {
             int counter = 0;
-            while (true)
+            while (listenToConnections)
             {
                 ConnectionFeedback = "Listening for connections on port: " + localPort;
                 Console.WriteLine("ServerSetup method has been called " + counter + " times");
@@ -185,6 +186,10 @@ namespace Filesender
 
         private void SendFileThread(object obj)
         {
+            if (!multipleFile)
+            {
+
+            }
             OpenFileDialog ofd = new OpenFileDialog
             {
                 Filter = "All Files (*.*)|*.*"
@@ -198,71 +203,75 @@ namespace Filesender
                 int onegb = 1000000000;
                 long fileSize = new FileInfo(fileToSendPath).Length;
                 Console.WriteLine("File size: " + fileSize);
-
+                //this is the point to decide
 
                 if (fileSize > onegb)
                 {
                     string inputFile = fileToSendPath;
                     FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
+                    FileStream outputFile;
                     MemoryStream ms = new MemoryStream();
                     int numberOfFiles = 4;
                     int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
                     Console.WriteLine("nrFiles: " + numberOfFiles);
-                    int cc = 0;
-                    
-                    for (int i = 0; i < numberOfFiles; i++)
+
+                    //split files into chunks
+                    for (int i = 0; i < 4; i++)
                     {
-                        TcpClient tempTcp = new TcpClient();
-                        tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-                        tempTcp.Close();
-
-                        TcpClient clientForFileTransfer = new TcpClient();
-                        NetworkStream clientNetworkStream;
-                        clientForFileTransfer.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-                        clientNetworkStream = clientForFileTransfer.GetStream();
-
-                        // must send filename, filesize and then file
                         string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
                         string extension = Path.GetExtension(inputFile);
-                        FileStream outputFile = new FileStream(Path.GetDirectoryName(inputFile) + "\\" + baseFileName + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) + extension + ".tmp", FileMode.Create, FileAccess.Write);
+                        outputFile = new FileStream(Path.GetDirectoryName(inputFile) + "\\" + baseFileName + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) + extension + ".tmp", FileMode.Create, FileAccess.Write);
                         int bytesRead = 0;
-                        byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat < system out of memory
-                        cc++;
-                        Console.WriteLine("It crashes on: " + cc);
-                        if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
-
+                        byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat
+                        Console.WriteLine("This is i: " + i);
+                        while ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
                         outputFile.Close();
+                    }
+                    fs.Close();
 
-                        //send filename             
-                        int bufferSize = 1024;
-                        byte[] fname = Encoding.UTF8.GetBytes(outputFile.Name);
-                        byte[] fLen = BitConverter.GetBytes(fname.Length);
-                        clientNetworkStream.Write(fLen, 0, 4);
-                        clientNetworkStream.Write(fname, 0, fname.Length);
-                        //send filesize
-                        byte[] dataLength = BitConverter.GetBytes(buffer.Length);
-                        clientNetworkStream.Write(dataLength, 0, 4);
-                        int bytesSent = 0;
-                        int bytesLeft = buffer.Length;
-                        int length = buffer.Length;
-                        while (bytesLeft > 0) // send the file
-                        {
-                            int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                            clientNetworkStream.Write(buffer, bytesSent, currentDataSize);
-                            bytesSent += currentDataSize;
-                            bytesLeft -= currentDataSize;
-                            double percentage = bytesSent / (double)length;
-                            double tmp = percentage * 100;
-                            int con = (int)tmp;
-                            Application.Current.Dispatcher.Invoke(() => Progress = con);
-                        }
+                    //send files
+                    string outPath = fileToSendPath;
+                    string[] tempFiles = Directory.GetFiles(fileToSendPath, "*.tmp");
+                    outputFile = null;
 
-                        File.Delete(outputFile.Name);
-                        clientForFileTransfer.Close();
-                        clientNetworkStream.Close();
+
+                   
+
+                    for (int i = 0; i < tempFiles.Length; i++)
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(tempFiles[i]);
+                        string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
+                        string extension = Path.GetExtension(fileName);
+                        SendFileMeth(fileName + baseFileName + extension);
+                        ////send filename             
+                        //int bufferSize = 1024;
+                        //byte[] fname = Encoding.UTF8.GetBytes(outputFile.Name);
+                        //byte[] fLen = BitConverter.GetBytes(fname.Length);
+                        //clientNetworkStream.Write(fLen, 0, 4);
+                        //clientNetworkStream.Write(fname, 0, fname.Length);
+                        ////send filesize
+                        //byte[] dataLength = BitConverter.GetBytes(buffer.Length);
+                        //clientNetworkStream.Write(dataLength, 0, 4);
+                        //int bytesSent = 0;
+                        //int bytesLeft = buffer.Length;
+                        //int length = buffer.Length;
+                        //while (bytesLeft > 0) // send the file
+                        //{
+                        //    int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                        //    clientNetworkStream.Write(buffer, bytesSent, currentDataSize);
+                        //    bytesSent += currentDataSize;
+                        //    bytesLeft -= currentDataSize;
+                        //    double percentage = bytesSent / (double)length;
+                        //    double tmp = percentage * 100;
+                        //    int con = (int)tmp;
+                        //    Application.Current.Dispatcher.Invoke(() => Progress = con);
+                        //}
+                        //File.Delete(outputFile.Name);
+                        //clientForFileTransfer.Close();
+                        //clientNetworkStream.Close();
+
                     }
 
-                    fs.Close();
                     Console.WriteLine("file sent from client");
 
                 }
@@ -308,8 +317,55 @@ namespace Filesender
                     Console.WriteLine("file sent from client");
                     clientForFileTransfer.Close();
                     clientNetworkStream.Close();
+                    multipleFile = false;
                 }
+
+                
             }
+        }
+        private void SendFileMeth(string filePath)
+        {
+            TcpClient tempTcp = new TcpClient();
+            tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
+            tempTcp.Close();
+
+            TcpClient clientForFileTransfer = new TcpClient();
+            NetworkStream clientNetworkStream;
+            clientForFileTransfer.Connect(IPAddress.Parse(RemoteIP), RemotePort);
+            clientNetworkStream = clientForFileTransfer.GetStream();
+
+            //send filename
+            int bufferSize = 1024;
+            byte[] fname = Encoding.UTF8.GetBytes(filePath);
+            byte[] fLen = BitConverter.GetBytes(fname.Length);
+            clientNetworkStream.Write(fLen, 0, 4);
+            clientNetworkStream.Write(fname, 0, fname.Length);
+
+            //send the filesize
+            byte[] data = File.ReadAllBytes(fileToSendPath);
+            byte[] dataLength = BitConverter.GetBytes(data.Length);
+            clientNetworkStream.Write(dataLength, 0, 4);
+            int bytesSent = 0;
+            int bytesLeft = data.Length;
+            int length = data.Length;
+
+            //send files
+            while (bytesLeft > 0) // send the file
+            {
+                int currentDataSize = Math.Min(bufferSize, bytesLeft);
+                clientNetworkStream.Write(data, bytesSent, currentDataSize);
+                bytesSent += currentDataSize;
+                bytesLeft -= currentDataSize;
+                double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
+                double tmp = percentage * 100;
+                int con = (int)tmp;
+                Application.Current.Dispatcher.Invoke(() => Progress = con);
+            }
+
+            Console.WriteLine("file sent from client");
+            clientForFileTransfer.Close();
+            clientNetworkStream.Close();
+            multipleFile = false;
         }
     }
 }
