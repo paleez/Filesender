@@ -82,6 +82,7 @@ namespace Filesender
         {
             TcpListener listenerServer = new TcpListener(IPAddress.Any, LocalPort);
             listenerServer.Start();
+            int fileSize = 0; //lets just count the amount of bytes, if it exceeds 1gb, call MergeFiles else do nothing
             while (listenToConnections)
             {
                 ConnectionFeedback = "Listening for connections on port: " + localPort;
@@ -110,6 +111,8 @@ namespace Filesender
                     byte[] data = new byte[dataLen];
                     int bufferSize = 1024;
                     int bytesRead = 0;
+
+
                     //receive file
                     while (bytesLeft > 0)
                     {
@@ -145,6 +148,7 @@ namespace Filesender
                 }
             }
             listenerServer.Stop();
+            MergeFiles(myFolder);
         }
         private void SendFile()
         {
@@ -162,7 +166,7 @@ namespace Filesender
             if ((bool)res)
             {
                 fileToSendPath = ofd.FileName;
-                int onegb = 1000000000;
+                int onegb = 900000000;  // to test with bible file thats like 950mb, (9 = 10)
                 long fileSize = new FileInfo(fileToSendPath).Length;
                 if (fileSize > onegb)
                 {
@@ -273,42 +277,47 @@ namespace Filesender
             clientNetworkStream.Close();
         }
 
-        private void MergeFiles()
+        private void MergeFiles(string filePath)
         {
-            //string outPath = 
-            //string[] tmpFiles = Directory.GetFiles(outPath, "*.tmp");
-            //FileStream outputFile = null;
-            //string prevFileName = "";
+            string outPath = filePath;
+            Console.WriteLine("fp: " + filePath);
+            string[] tmpFiles = Directory.GetFiles(outPath, "*.tmp");
+            for (int i = 0; i < tmpFiles.Length; i++)
+            {
+                Console.WriteLine("tmpfles:" + tmpFiles[i]);
+            }
+            FileStream outputFile = null;
+            string prevFileName = "";
 
-            //foreach (string tempFile in tmpFiles)
-            //{
+            foreach (string tempFile in tmpFiles)
+            {
 
-            //    string fileName = Path.GetFileNameWithoutExtension(tempFile);
-            //    string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
-            //    string extension = Path.GetExtension(fileName);
+                string fileName = Path.GetFileNameWithoutExtension(tempFile);
+                string baseFileName = fileName.Substring(0, fileName.IndexOf(Convert.ToChar(".")));
+                string extension = Path.GetExtension(fileName);
 
-            //    if (!prevFileName.Equals(baseFileName))
-            //    {
-            //        if (outputFile != null)
-            //        {
-            //            outputFile.Flush();
-            //            outputFile.Close();
-            //        }
-            //        outputFile = new FileStream(outPath + baseFileName + extension, FileMode.OpenOrCreate, FileAccess.Write);
-            //    }
+                if (!prevFileName.Equals(baseFileName))
+                {
+                    if (outputFile != null)
+                    {
+                        outputFile.Flush();
+                        outputFile.Close();
+                    }
+                    outputFile = new FileStream(outPath + baseFileName + extension, FileMode.OpenOrCreate, FileAccess.Write);
+                }
 
-            //    int bytesRead = 0;
-            //    byte[] buffer = new byte[1024];
-            //    FileStream inputTempFile = new FileStream(tempFile, FileMode.OpenOrCreate, FileAccess.Read);
+                int bytesRead = 0;
+                byte[] buffer = new byte[1024];
+                FileStream inputTempFile = new FileStream(tempFile, FileMode.OpenOrCreate, FileAccess.Read);
 
-            //    while ((bytesRead = inputTempFile.Read(buffer, 0, 1024)) > 0)
-            //        outputFile.Write(buffer, 0, bytesRead);
+                while ((bytesRead = inputTempFile.Read(buffer, 0, 1024)) > 0)
+                    outputFile.Write(buffer, 0, bytesRead);
 
-            //    inputTempFile.Close();
-            //    File.Delete(tempFile);
-            //    prevFileName = baseFileName;
-            //}
-            //outputFile.Close();
+                inputTempFile.Close();
+                File.Delete(tempFile);
+                prevFileName = baseFileName;
+            }
+            outputFile.Close();
         }
     }
 }
