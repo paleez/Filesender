@@ -208,12 +208,13 @@ namespace Filesender
                         Console.WriteLine("This is i: " + i);
                         if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
                         outputFile.Close();
-                        SendFileMeth(outputFile.Name);
+                        TransferFile(outputFile.Name);
                         File.Delete(outputFile.Name);
                     }
                 }
                 else
                 {
+                    //SendFileMeth(ofd.SafeFileName);
                     TcpClient tempTcp = new TcpClient();
                     tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
                     tempTcp.Close();
@@ -256,7 +257,7 @@ namespace Filesender
             }
         }
 
-        private void SendFileMeth(string filePath)
+        private void TransferFile(string filePath)
         {
             TcpClient tempTcp = new TcpClient();
             tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
