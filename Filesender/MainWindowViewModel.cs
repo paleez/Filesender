@@ -187,7 +187,7 @@ namespace Filesender
             if ((bool)res)
             {
                 fileToSendPath = ofd.FileName;
-                int onegb = 900000000;  // to test with bible file thats like 950mb, (9 = 10)
+                int onegb = 1000000000;  // to test with bible file thats like 950mb, (9 = 10)
                 long fileSize = new FileInfo(fileToSendPath).Length;
                 if (fileSize > onegb)
                 {
@@ -214,50 +214,12 @@ namespace Filesender
                 }
                 else
                 {
-                    //SendFileMeth(ofd.SafeFileName);
-                    TcpClient tempTcp = new TcpClient();
-                    tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-                    tempTcp.Close();
-
-                    TcpClient clientForFileTransfer = new TcpClient();
-                    NetworkStream clientNetworkStream;
-                    clientForFileTransfer.Connect(IPAddress.Parse(RemoteIP), RemotePort);
-                    clientNetworkStream = clientForFileTransfer.GetStream();
-
-                    //send filename
-                    int bufferSize = 1024;
-                    byte[] fname = Encoding.UTF8.GetBytes(ofd.SafeFileName);
-                    byte[] fLen = BitConverter.GetBytes(fname.Length);
-                    clientNetworkStream.Write(fLen, 0, 4);
-                    clientNetworkStream.Write(fname, 0, fname.Length);
-
-                    //send the filesize
-                    byte[] data = File.ReadAllBytes(fileToSendPath);
-                    byte[] dataLength = BitConverter.GetBytes(data.Length);
-                    clientNetworkStream.Write(dataLength, 0, 4);
-                    int bytesSent = 0;
-                    int bytesLeft = data.Length;
-                    int length = data.Length;
-
-                    //send files
-                    while (bytesLeft > 0) // send the file
-                    {
-                        int currentDataSize = Math.Min(bufferSize, bytesLeft);
-                        clientNetworkStream.Write(data, bytesSent, currentDataSize);
-                        bytesSent += currentDataSize;
-                        bytesLeft -= currentDataSize;
-                        double percentage = bytesSent / (double)length; //say filesize is 423 000 and bytesent
-                        double tmp = percentage * 100;
-                        int con = (int)tmp;
-                        Application.Current.Dispatcher.Invoke(() => Progress = con);
-                    }
-                    clientForFileTransfer.Close();
-                    clientNetworkStream.Close();
+                    TransferFile(ofd.SafeFileName);
                 }
             }
         }
 
-        private void TransferFile(string filePath)
+        private void TransferFile(/*TcpClient tcpClient, NetworkStream networkStream*/string filePath)
         {
             TcpClient tempTcp = new TcpClient();
             tempTcp.Connect(IPAddress.Parse(RemoteIP), RemotePort);
