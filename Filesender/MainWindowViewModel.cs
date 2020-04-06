@@ -168,16 +168,16 @@ namespace Filesender
                     ConnectedClients = "Connected clients: " + ccCounter--;
                 }
             }
-            if (fileSize > fileSizeLimit)
-            {
-                outputFile = new FileStream(Path.GetDirectoryName(inputFile) 
-                    + "\\" + baseFileName 
-                    + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) 
-                    + extension + ".tmp", FileMode.Create, FileAccess.Write);
+            //if (fileSize > fileSizeLimit)
+            //{
+            //    outputFile = new FileStream(Path.GetDirectoryName(inputFile) 
+            //        + "\\" + baseFileName 
+            //        + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) 
+            //        + extension + ".tmp", FileMode.Create, FileAccess.Write);
 
-                MergeFiles(myFolder);
-                ConnectionFeedback = "File has been merged";
-            }
+            //    MergeFiles(myFolder);
+            //    ConnectionFeedback = "File has been merged";
+            //}
             //listenerServer.Stop();
             //MergeFiles(myFolder);
         }
