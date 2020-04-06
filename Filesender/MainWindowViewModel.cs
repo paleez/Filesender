@@ -146,7 +146,7 @@ namespace Filesender
         {
             TcpListener listenerServer = new TcpListener(IPAddress.Any, LocalPort);
             listenerServer.Start();
-            int fileSize = 0; //lets just count the amount of bytes, if it exceeds 1gb, call MergeFiles else do nothing
+            
             while (listenToConnections)
             {
                 ConnectionFeedback = "Listening for connections on port: " + localPort;
@@ -167,6 +167,16 @@ namespace Filesender
                     CloseConnection(tcpClient, networkStream, socketServer); // listenerServer should be sent as a parameter but have to change architecture first
                     ConnectedClients = "Connected clients: " + ccCounter--;
                 }
+            }
+            if (fileSize > fileSizeLimit)
+            {
+                outputFile = new FileStream(Path.GetDirectoryName(inputFile) 
+                    + "\\" + baseFileName 
+                    + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) 
+                    + extension + ".tmp", FileMode.Create, FileAccess.Write);
+
+                MergeFiles(myFolder);
+                ConnectionFeedback = "File has been merged";
             }
             //listenerServer.Stop();
             //MergeFiles(myFolder);
@@ -198,7 +208,7 @@ namespace Filesender
                     int numberOfFiles = 10;
                     int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
 
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < numberOfFiles; i++)
                     {
                         string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
                         string extension = Path.GetExtension(inputFile);
