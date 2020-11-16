@@ -27,7 +27,7 @@ namespace Filesender
         public int Progress { get { return progress; } set { progress = value; OnPropertyChanged(nameof(Progress)); } }
         public int ProgressReceive { get { return progressReceive; } set { progressReceive = value; OnPropertyChanged(nameof(ProgressReceive)); } }
         public string ConnectionFeedback { get { return connectionFeedback; } set { connectionFeedback = value; OnPropertyChanged(nameof(ConnectionFeedback)); /*Console.WriteLine("connectionFeedback changed to " + connectionFeedback); */ } }
-        public string ReceivedFilesPath { get { return "Receiving files in\n" + myFolder; } set { myFolder = value; OnPropertyChanged(nameof(ReceivedFilesPath));  } }
+        public string ReceivedFilesPath { get { return "Receiving files in\n" + myFolder; } set { myFolder = value; OnPropertyChanged(nameof(ReceivedFilesPath)); } }
         private int progress = 0;
         private int progressReceive = 0;
         private int localIP;
@@ -40,6 +40,7 @@ namespace Filesender
         private string fileToSendPath;
         private bool pathSet = false;
         private bool listenToConnections = true;
+        private int numFilesCounter = 0;
         Thread clientInitThread;
 
         public string ConnectedClients { get { return connectedClients; } set { connectedClients = value; OnPropertyChanged(nameof(ConnectedClients)); } }
@@ -125,7 +126,9 @@ namespace Filesender
         {
             if (!pathSet)
             {
+               //string myDocumentPath = Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
                 string myDocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
                 myFolder = myDocumentPath;
                 ReceivedFilesPath = myFolder;
                 pathSet = true;
@@ -146,7 +149,7 @@ namespace Filesender
         {
             TcpListener listenerServer = new TcpListener(IPAddress.Any, LocalPort);
             listenerServer.Start();
-            
+
             while (listenToConnections)
             {
                 ConnectionFeedback = "Listening for connections on port: " + localPort;
@@ -164,8 +167,14 @@ namespace Filesender
                     string path = SetPath();
                     WriteToDisc(path, filename, data);
                     ConnectionFeedback = "File received";
+                    numFilesCounter++;
                     CloseConnection(tcpClient, networkStream, socketServer); // listenerServer should be sent as a parameter but have to change architecture first
                     ConnectedClients = "Connected clients: " + ccCounter--;
+                }
+                if (numFilesCounter == 10)
+                {
+                    MergeFiles();
+                    numFilesCounter = 0;
                 }
             }
             //if (fileSize > fileSizeLimit)
@@ -186,6 +195,8 @@ namespace Filesender
             clientInitThread = new Thread(SendFile);
             clientInitThread.Start();
         }
+
+        //need to send how many files are to be sent
         private void SendFile()
         {
             OpenFileDialog ofd = new OpenFileDialog
@@ -199,35 +210,38 @@ namespace Filesender
                 fileToSendPath = ofd.FileName;
                 int onegb = 1000000000;  // to test with bible file thats like 950mb, (9 = 10)
                 long fileSize = new FileInfo(fileToSendPath).Length;
-                if (fileSize > onegb)
-                {
-                    string inputFile = fileToSendPath;
-                    FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
-                    FileStream outputFile;
-                    MemoryStream ms = new MemoryStream();
-                    int numberOfFiles = 10;
-                    int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
+                //if (fileSize > onegb)
+                //{
+                string inputFile = fileToSendPath;
+                FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
+                FileStream outputFile;
+                MemoryStream ms = new MemoryStream();
 
-                    for (int i = 0; i < numberOfFiles; i++)
-                    {
-                        string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
-                        string extension = Path.GetExtension(inputFile);
-                        outputFile = new FileStream(Path.GetDirectoryName(inputFile) + "\\" + baseFileName + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) + extension + ".tmp", FileMode.Create, FileAccess.Write);
-                        int bytesRead = 0;
-                        byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat
-                        Console.WriteLine("This is i: " + i);
-                        if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
-                        outputFile.Close();
-                        TransferFile(outputFile.Name);
-                        File.Delete(outputFile.Name);
-                    }
-                }
-                else
+                int numberOfFiles = 10;
+                int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
+
+
+                for (int i = 0; i < numberOfFiles; i++)
                 {
-                    TransferFile(ofd.SafeFileName);
+                    string baseFileName = Path.GetFileNameWithoutExtension(inputFile);
+                    string extension = Path.GetExtension(inputFile);
+                    outputFile = new FileStream(Path.GetDirectoryName(inputFile) + "\\" + baseFileName + "." + i.ToString().PadLeft(5, Convert.ToChar("0")) + extension + ".tmp", FileMode.Create, FileAccess.Write);
+                    int bytesRead = 0;
+                    byte[] buffer = new byte[sizeOfEachFile]; //create a buffer to write data into til its full then close and repeat
+                    Console.WriteLine("This is i: " + i);
+                    if ((bytesRead = fs.Read(buffer, 0, sizeOfEachFile)) > 0) outputFile.Write(buffer, 0, bytesRead);
+                    outputFile.Close();
+                    TransferFile(outputFile.Name);
+                    File.Delete(outputFile.Name);
                 }
+                //}
+                //else
+                //{
+                //    TransferFile(ofd.SafeFileName);
+                //}
             }
         }
+
 
         private void TransferFile(/*TcpClient tcpClient, NetworkStream networkStream*/string filePath)
         {
@@ -271,10 +285,12 @@ namespace Filesender
             clientNetworkStream.Close();
         }
 
-        private void MergeFiles(string filePath)
+        private void MergeFiles()
         {
-            string outPath = filePath;
-            Console.WriteLine("fp: " + filePath);
+            string fp = @"C:\Users\paleez\Pictures\";
+            //string fp = Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders", "{374DE290-123F-4565-9164-39C4925E467B}", String.Empty).ToString();
+            string outPath = fp;
+            Console.WriteLine("fp: " + fp);
             string[] tmpFiles = Directory.GetFiles(outPath, "*.tmp");
             for (int i = 0; i < tmpFiles.Length; i++)
             {
@@ -311,6 +327,7 @@ namespace Filesender
                 File.Delete(tempFile);
                 prevFileName = baseFileName;
             }
+            Console.WriteLine("Closing file");
             outputFile.Close();
         }
     }
