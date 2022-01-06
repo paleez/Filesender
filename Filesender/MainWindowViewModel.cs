@@ -171,7 +171,7 @@ namespace Filesender
                     CloseConnection(tcpClient, networkStream, socketServer); // listenerServer should be sent as a parameter but have to change architecture first
                     ConnectedClients = "Connected clients: " + ccCounter--;
                 }
-                if (numFilesCounter == 10)
+                if (numFilesCounter < 48)
                 {
                     MergeFiles();
                     numFilesCounter = 0;
@@ -217,7 +217,7 @@ namespace Filesender
                 FileStream outputFile;
                 MemoryStream ms = new MemoryStream();
 
-                int numberOfFiles = 10;
+                int numberOfFiles = 49;
                 int sizeOfEachFile = (int)Math.Ceiling((double)fs.Length / numberOfFiles);
 
 
